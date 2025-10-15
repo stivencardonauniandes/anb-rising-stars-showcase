@@ -120,3 +120,7 @@ class UserAuthResponse(BaseModel):
     user: UserResponse
     access_token: str
     token_type: str
+
+class VideoUploadResponse(BaseModel):
+    message: str
+    task_id: Optional[str] = None

@@ -1,21 +1,37 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+import os
+import shutil
+from fastapi import FastAPI, File, HTTPException, Depends, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.params import Form
+from moviepy.editor import VideoFileClip
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from pydantic import BaseModel
 from typing import List
+import logging
 import uvicorn
 
 from database import get_db, Base, engine
 from models import User, Video, Vote
 from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token, 
-    UserResponse
+    UserResponse,
+    VideoUploadResponse
 )
 from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
 from datetime import timedelta
 
 # Constants
 API_TITLE = "ANB Rising Stars Showcase API"
+INVALID_FILE_TYPE = "Tipo de archivo inválido. Se requiere un archivo de video."
+INVALID_VIDEO_LENGTH = "El video debe tener una duración entre 20 y 60 segundos."
+INVALID_VIDEO_RESOLUTION = "La resolución del video debe ser al menos 1080p."
+INVALID_VIDEO_TITLE = "El título del video no puede estar vacío."
+FILE_PROCESSING_ERROR = "Error al procesar el archivo de video."
+
+# Configure logging
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -130,6 +146,40 @@ async def get_current_user_info(db: Session = Depends(get_db), email: str = Depe
     """Get current authenticated user information"""
     user = get_current_user(db, email)
     return UserResponse.model_validate(user)
+
+# Endpoint to upload videos
+@app.post("/api/videos/upload", response_model=VideoUploadResponse)
+async def upload_video(file: UploadFile = File(...), title: str = Form(...)):
+
+    # Validate title
+    if not title or title.strip() == "":
+        raise HTTPException(status_code=400, detail=INVALID_VIDEO_TITLE)
+    # Validate file type
+    if not file.content_type.startswith("video/"):
+        raise HTTPException(status_code=400, detail=INVALID_FILE_TYPE)
+    
+    # Create a temporary file path
+    temp_filepath = f"temp_video_{file.filename}"
+
+    # Save the uploaded file to the temporary path
+    with open(temp_filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Validate video length
+    try:
+        video_clip = VideoFileClip(temp_filepath)
+        duration = video_clip.duration  # Duration in seconds
+        width = video_clip.w
+        height = video_clip.h
+        video_clip.close()
+        if duration < 20 or duration > 60:  # Duration must be between 20 and 60 seconds
+            raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)
+        if width < 1920 or height < 1080:  # Resolution must be at least 1080p
+            raise HTTPException(status_code=400, detail=INVALID_VIDEO_RESOLUTION)
+    except (ValueError, BufferError, RuntimeError) as e:
+        logger.error(f"Error processing video file: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=FILE_PROCESSING_ERROR)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
