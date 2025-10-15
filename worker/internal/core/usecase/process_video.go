@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"io"
 	"time"
 
 	"go.uber.org/zap"
@@ -78,8 +79,19 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 		processCtx, cancel = context.WithTimeout(ctx, u.processingTimeout)
 		defer cancel()
 	}
+	rawVideoReader, err := u.getVideoBinary(processCtx, task)
+	if err != nil {
+		video.ResetToUploaded()
+		updateErr := u.repository.Update(ctx, video)
+		if updateErr != nil {
+			u.logger.Error("failed to reset video after download error", zap.Error(updateErr), zap.String("video_id", task.VideoID))
+		}
+		u.metrics.IncTaskProcessed(string(domain.VideoStatusFailed))
+		u.logger.Error("failed to download video", zap.Error(err), zap.String("task_id", task.ID))
+		return err
+	}
 
-	err = u.processVideo(processCtx, task)
+	videoProcessedReader, err := u.processVideo(ctx, rawVideoReader)
 	if err != nil {
 		video.ResetToUploaded()
 		updateErr := u.repository.Update(ctx, video)
@@ -92,6 +104,19 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 		if task.Attempt+1 >= u.maxAttempts && u.maxAttempts > 0 {
 			u.logger.Warn("max retry attempts reached", zap.String("task_id", task.ID))
 		}
+		status = domain.VideoStatusFailed
+		return err
+	}
+
+	err = u.uploadProcessedVideo(processCtx, task, videoProcessedReader)
+	if err != nil {
+		video.ResetToUploaded()
+		updateErr := u.repository.Update(ctx, video)
+		if updateErr != nil {
+			u.logger.Error("failed to reset video after upload error", zap.Error(updateErr), zap.String("video_id", task.VideoID))
+		}
+		u.metrics.IncTaskProcessed(string(domain.VideoStatusFailed))
+		u.logger.Error("failed to upload processed video", zap.Error(err), zap.String("task_id", task.ID))
 		status = domain.VideoStatusFailed
 		return err
 	}
@@ -121,32 +146,41 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 	return nil
 }
 
-func (u *ProcessVideoUseCase) processVideo(ctx context.Context, task domain.Task) error {
-	if u.processor == nil {
-		return errors.New("video processor not configured")
-	}
-
+func (u *ProcessVideoUseCase) getVideoBinary(ctx context.Context, task domain.Task) (io.ReadCloser, error) {
 	reader, err := u.storage.Download(ctx, task.SourcePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		_ = reader.Close()
 	}()
+	return reader, nil
+}
 
-	watermarkText := task.Metadata["watermark_text"]
-	if watermarkText == "" {
-		watermarkText = task.VideoID
+func (u *ProcessVideoUseCase) uploadProcessedVideo(ctx context.Context, task domain.Task, processed *ports.ProcessedVideo) error {
+	defer func() {
+		_ = processed.Close()
+	}()
+
+	if err := u.storage.Upload(ctx, task.OutputPath, processed.Reader); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *ProcessVideoUseCase) processVideo(ctx context.Context, rawVideoReader io.ReadCloser) (*ports.ProcessedVideo, error) {
+	if u.processor == nil {
+		return nil, errors.New("video processor not configured")
 	}
 
-	processed, err := u.processor.Process(ctx, reader, ports.VideoProcessingOptions{
+	processed, err := u.processor.Process(ctx, rawVideoReader, ports.VideoProcessingOptions{
 		ClipDuration: 30 * time.Second,
 		TargetWidth:  1280,
 		TargetHeight: 720,
 		TargetFormat: "mp4",
 		RemoveAudio:  true,
 		Watermark: &ports.WatermarkOptions{
-			Text:          watermarkText,
+			Text:          "water-mark",
 			FontColor:     "white",
 			FontSize:      48,
 			BorderWidth:   2,
@@ -159,15 +193,8 @@ func (u *ProcessVideoUseCase) processVideo(ctx context.Context, task domain.Task
 		},
 	})
 	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = processed.Close()
-	}()
-
-	if err := u.storage.Upload(ctx, task.OutputPath, processed.Reader); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return processed, nil
 }

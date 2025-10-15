@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	defaultClipDuration = 30 * time.Second
-	defaultWidth        = 1280
-	defaultHeight       = 720
+	defaultClipDuration    = 30 * time.Second
+	defaultWidth           = 1280
+	defaultHeight          = 720
+	curtainSegmentDuration = 2500 * time.Millisecond
 )
 
 type VideoProcessor struct {
@@ -100,41 +101,65 @@ func (p *VideoProcessor) Process(ctx context.Context, input io.Reader, opts port
 		height = defaultHeight
 	}
 
-	filterComponents := []string{
+	contentSeconds := clipDuration.Seconds()
+	curtainSeconds := curtainSegmentDuration.Seconds()
+	totalDuration := clipDuration + 2*curtainSegmentDuration
+	totalSeconds := totalDuration.Seconds()
+
+	frameRate := "30"
+	if rate, err := p.probeFrameRate(ctx, inputPath); err == nil && rate != "" {
+		frameRate = rate
+	} else if err != nil {
+		p.logger.Debug("ffmpeg processor: probe frame rate failed", zap.Error(err))
+	}
+
+	baseFilters := []string{
 		fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=decrease", width, height),
 		fmt.Sprintf("pad=%d:%d:(%d-iw)/2:(%d-ih)/2", width, height, width, height),
 		"setsar=1",
 		"format=yuv420p",
 	}
-
-	clipSeconds := clipDuration.Seconds()
-	if opts.Watermark != nil {
-		wm := normalizeWatermark(opts.Watermark, clipSeconds)
-		xExpr, yExpr := positionExpressions(wm.Position, wm.MarginX, wm.MarginY)
-
-		drawArgs := []string{}
-		if wm.FontFile != "" {
-			drawArgs = append(drawArgs, fmt.Sprintf("fontfile='%s'", escapeForFFMPEG(wm.FontFile)))
-		}
-		drawArgs = append(drawArgs,
-			fmt.Sprintf("text='%s'", escapeDrawText(wm.Text)),
-			fmt.Sprintf("fontcolor=%s", wm.FontColor),
-			fmt.Sprintf("fontsize=%d", wm.FontSize),
-			fmt.Sprintf("borderw=%d", wm.BorderWidth),
-		)
-		if wm.BorderWidth > 0 {
-			drawArgs = append(drawArgs, fmt.Sprintf("bordercolor=%s", wm.BorderColor))
-		}
-		drawArgs = append(drawArgs,
-			fmt.Sprintf("x=%s", xExpr),
-			fmt.Sprintf("y=%s", yExpr),
-			fmt.Sprintf("enable='lte(t,%.3f)+gte(t,%.3f)'", wm.StartDurationSeconds, wm.EndTriggerSeconds),
-		)
-
-		filterComponents = append(filterComponents, "drawtext="+strings.Join(drawArgs, ":"))
+	if frameRate != "" {
+		baseFilters = append(baseFilters, fmt.Sprintf("fps=%s", frameRate))
+	}
+	if contentSeconds > 0 {
+		baseFilters = append(baseFilters, fmt.Sprintf("trim=duration=%.3f", contentSeconds), "setpts=PTS-STARTPTS")
 	}
 
-	filter := fmt.Sprintf("[0:v]%s[vout]", strings.Join(filterComponents, ","))
+	filterParts := []string{fmt.Sprintf("[0:v]%s[vbase]", strings.Join(baseFilters, ","))}
+
+	var watermarkCfg *watermarkConfig
+	if opts.Watermark != nil {
+		watermarkCfg = normalizeWatermark(opts.Watermark, contentSeconds)
+	}
+
+	mainLabel := "vbase"
+	if watermarkCfg != nil {
+		drawArgs := buildDrawTextArgs(watermarkCfg, true)
+		filterParts = append(filterParts, fmt.Sprintf("[%s]drawtext=%s[vmain]", mainLabel, drawArgs))
+		mainLabel = "vmain"
+	}
+
+	curtainBase := fmt.Sprintf("color=c=black:size=%dx%d:rate=%s:d=%.3f,format=yuv420p,setsar=1", width, height, frameRate, curtainSeconds)
+	filterParts = append(filterParts,
+		fmt.Sprintf("%s[vcurtain_start_base]", curtainBase),
+		fmt.Sprintf("%s[vcurtain_end_base]", curtainBase),
+	)
+
+	startLabel := "vcurtain_start_base"
+	endLabel := "vcurtain_end_base"
+	if watermarkCfg != nil {
+		curtainDrawArgs := buildDrawTextArgs(watermarkCfg, false)
+		filterParts = append(filterParts,
+			fmt.Sprintf("[%s]drawtext=%s[vcurtain_start]", startLabel, curtainDrawArgs),
+			fmt.Sprintf("[%s]drawtext=%s[vcurtain_end]", endLabel, curtainDrawArgs),
+		)
+		startLabel = "vcurtain_start"
+		endLabel = "vcurtain_end"
+	}
+
+	filterParts = append(filterParts, fmt.Sprintf("[%s][%s][%s]concat=n=3:v=1:a=0[vout]", startLabel, mainLabel, endLabel))
+	filter := strings.Join(filterParts, ";")
 
 	outputExt := opts.TargetFormat
 	if outputExt == "" {
@@ -158,8 +183,8 @@ func (p *VideoProcessor) Process(ctx context.Context, input io.Reader, opts port
 		args = append(args, "-an")
 	}
 
-	if clipSeconds > 0 {
-		args = append(args, "-t", fmt.Sprintf("%.3f", clipSeconds))
+	if totalSeconds > 0 {
+		args = append(args, "-t", fmt.Sprintf("%.3f", totalSeconds))
 	}
 
 	args = append(args, outputPath)
@@ -181,17 +206,33 @@ func (p *VideoProcessor) Process(ctx context.Context, input io.Reader, opts port
 	}
 
 	metadata := map[string]string{
-		"clip_duration_seconds": fmt.Sprintf("%.3f", clipSeconds),
-		"target_width":          strconv.Itoa(width),
-		"target_height":         strconv.Itoa(height),
+		"clip_duration_seconds":   fmt.Sprintf("%.3f", contentSeconds),
+		"curtain_segment_seconds": fmt.Sprintf("%.3f", curtainSeconds),
+		"total_duration_seconds":  fmt.Sprintf("%.3f", totalSeconds),
+		"frame_rate":              frameRate,
+		"target_width":            strconv.Itoa(width),
+		"target_height":           strconv.Itoa(height),
 	}
 
 	return &ports.ProcessedVideo{
 		Reader:   &tempFileReadCloser{File: reader, path: outputPath},
 		Format:   outputExt,
-		Duration: clipDuration,
+		Duration: totalDuration,
 		Metadata: metadata,
 	}, nil
+}
+
+func (p *VideoProcessor) probeFrameRate(ctx context.Context, path string) (string, error) {
+	cmd := exec.CommandContext(ctx, p.ffprobePath, "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=avg_frame_rate", "-of", "default=noprint_wrappers=1:nokey=1", path)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("ffprobe frame rate: %w: %s", err, string(output))
+	}
+	frameRate := strings.TrimSpace(string(output))
+	if frameRate == "" || frameRate == "N/A" || frameRate == "0/0" {
+		return "", errors.New("ffprobe frame rate: unavailable")
+	}
+	return frameRate, nil
 }
 
 func (p *VideoProcessor) probeDuration(ctx context.Context, path string) (time.Duration, error) {
@@ -334,6 +375,37 @@ func positionExpressions(pos ports.WatermarkPosition, marginX, marginY int) (str
 	}
 
 	return x, y
+}
+
+func buildDrawTextArgs(wm *watermarkConfig, includeEnable bool) string {
+	if wm == nil {
+		return ""
+	}
+
+	xExpr, yExpr := positionExpressions(wm.Position, wm.MarginX, wm.MarginY)
+
+	drawArgs := []string{}
+	if wm.FontFile != "" {
+		drawArgs = append(drawArgs, fmt.Sprintf("fontfile='%s'", escapeForFFMPEG(wm.FontFile)))
+	}
+	drawArgs = append(drawArgs,
+		fmt.Sprintf("text='%s'", escapeDrawText(wm.Text)),
+		fmt.Sprintf("fontcolor=%s", wm.FontColor),
+		fmt.Sprintf("fontsize=%d", wm.FontSize),
+		fmt.Sprintf("borderw=%d", wm.BorderWidth),
+	)
+	if wm.BorderWidth > 0 {
+		drawArgs = append(drawArgs, fmt.Sprintf("bordercolor=%s", wm.BorderColor))
+	}
+	drawArgs = append(drawArgs,
+		fmt.Sprintf("x=%s", xExpr),
+		fmt.Sprintf("y=%s", yExpr),
+	)
+	if includeEnable {
+		drawArgs = append(drawArgs, fmt.Sprintf("enable='lte(t,%.3f)+gte(t,%.3f)'", wm.StartDurationSeconds, wm.EndTriggerSeconds))
+	}
+
+	return strings.Join(drawArgs, ":")
 }
 
 func ensureExt(ext string) string {
