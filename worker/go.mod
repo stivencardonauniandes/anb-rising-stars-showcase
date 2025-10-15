@@ -1,12 +1,13 @@
 module github.com/alejandro/video-worker
 
-go 1.22
+go 1.23.0
 
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/studio-b12/gowebdav v0.9.0
+	go.uber.org/mock v0.6.0
 	go.uber.org/zap v1.27.0
 )
 

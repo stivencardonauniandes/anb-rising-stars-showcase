@@ -78,22 +78,21 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 		defer cancel()
 	}
 
-	err = u.processVideo(processCtx, task)
-	if err != nil {
+	procErr := u.processVideo(processCtx, task)
+	if procErr != nil {
 		video.ResetToUploaded()
-		err := u.repository.Update(ctx, video)
-		if err != nil {
-			u.logger.Error("failed to reset video after processing error", zap.Error(err), zap.String("video_id", task.VideoID))
+		if updateErr := u.repository.Update(ctx, video); updateErr != nil {
+			u.logger.Error("failed to reset video after processing error", zap.Error(updateErr), zap.String("video_id", task.VideoID))
 		}
 
 		u.metrics.IncTaskProcessed(string(domain.VideoStatusFailed))
-		u.logger.Error("video processing failed", zap.Error(err), zap.String("task_id", task.ID))
+		u.logger.Error("video processing failed", zap.Error(procErr), zap.String("task_id", task.ID))
 
 		if task.Attempt+1 >= u.maxAttempts && u.maxAttempts > 0 {
 			u.logger.Warn("max retry attempts reached", zap.String("task_id", task.ID))
 		}
 		status = domain.VideoStatusFailed
-		return err
+		return procErr
 	}
 
 	processedVideoID := task.Metadata["processed_video_id"]
