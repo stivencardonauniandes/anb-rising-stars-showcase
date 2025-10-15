@@ -62,7 +62,7 @@ async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
         )
     
     # Hash password
-    hashed_password = get_password_hash(user_data.password)
+    hashed_password = get_password_hash(user_data.password1)
     
     # Create new user
     db_user = User(

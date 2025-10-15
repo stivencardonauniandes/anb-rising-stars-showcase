@@ -79,23 +79,3 @@ curl -X POST "http://localhost:8000/api/public/videos/{video_id}/vote" \
     "video_id": "VIDEO_UUID_AQUI"
   }'
 ```
-
-### Migraciones Manuales
-```bash
-cd api
-
-# Generar nueva migración
-alembic revision --autogenerate -m "Description"
-
-# Aplicar migraciones
-alembic upgrade head
-
-# Ver historial
-alembic history
-```
-
-## 🔧 URLs de Servicios
-- **API**: http://localhost:8000
-- **Documentación**: http://localhost:8000/docs
-- **PostgreSQL**: localhost:5432
-- **Redis**: localhost:6379

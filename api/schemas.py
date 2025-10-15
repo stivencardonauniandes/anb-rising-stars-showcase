@@ -75,11 +75,12 @@ class UserSignup(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    password: str
+    password1: str
+    password2: str
     city: Optional[str] = None
     country: Optional[str] = None
     
-    @validator('password')
+    @validator('password1')
     def validate_password_strength(cls, v):
         if len(v) < 8:
             raise ValueError('Password must be at least 8 characters long')
@@ -89,6 +90,12 @@ class UserSignup(BaseModel):
             raise ValueError('Password must contain at least one lowercase letter')
         if not any(c.isdigit() for c in v):
             raise ValueError('Password must contain at least one number')
+        return v
+    
+    @validator('password2')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'password1' in values and v != values['password1']:
+            raise ValueError('Passwords do not match')
         return v
 
 class UserResponse(BaseModel):
