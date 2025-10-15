@@ -9,7 +9,6 @@
   "email": "string",
   "first_name": "string",
   "last_name": "string", 
-  "type": "player|voter",
   "city": "string (opcional)",
   "country": "string (opcional)"
 }
@@ -43,60 +42,25 @@
 ## 🚀 Endpoints
 
 ### Usuarios
-- `POST /users/register` - Registrar usuario
-- `GET /users` - Listar usuarios
-- `GET /users/{user_id}` - Obtener usuario
-- `PUT /users/{user_id}` - Actualizar usuario
+- `POST /api/auth/signup` - Registrar usuario
+- `POST /api/auth/login` - Autenticación de usuarios y generación de token JWT
 
 ### Videos
-- `POST /videos` - Crear video
-- `GET /videos` - Listar videos
-- `GET /videos/{video_id}` - Obtener video
-- `PUT /videos/{video_id}` - Actualizar video
-- `DELETE /videos/{video_id}` - Eliminar video
+- `POST /api/videos/upload` - Subida de video de habilidades por un jugador
+- `GET /api/videos` - Lista todos los videos del usuario autenticado
+- `GET /api/videos/{video_id}` - Obtiene el detalle de un video específico del usuario
+- `DELETE /api/videos/{video_id}` - Elimina un video propio si aún es permitido
 
 ### Votos
-- `POST /votes` - Crear voto
-- `DELETE /votes/{user_id}/{video_id}` - Eliminar voto
-- `GET /videos/{video_id}/votes` - Obtener votos de un video
+- `GET /api/public/videos` - Lista videos públicos disponibles para votacion
+- `POST /api/public/videos/{video_id}/vote` - Emite un voto por un video público
+- `GET /api/public/rankings` - Muestra el ranking actual por votos acumulados
 
 ## 📝 Ejemplos de Uso
 
-### 1. Registrar un Jugador
+### 1. Subir Video
 ```bash
-curl -X POST "http://localhost:8000/users/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john.doe@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
-    "password1": "StrongPass123",
-    "password2": "StrongPass123",
-    "type": "player",
-    "city": "Bogotá",
-    "country": "Colombia"
-  }'
-```
-
-### 2. Registrar un Votante
-```bash
-curl -X POST "http://localhost:8000/users/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "voter@example.com",
-    "first_name": "Jane",
-    "last_name": "Smith",
-    "password1": "SecurePass456",
-    "password2": "SecurePass456",
-    "type": "voter",
-    "city": "Medellín",
-    "country": "Colombia"
-  }'
-```
-
-### 3. Crear Video
-```bash
-curl -X POST "http://localhost:8000/videos" \
+curl -X POST "http://localhost:8000/api/videos/upload" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "USER_UUID_AQUI",
@@ -106,28 +70,14 @@ curl -X POST "http://localhost:8000/videos" \
   }'
 ```
 
-### 4. Votar por un Video
+### 2. Votar por un Video
 ```bash
-curl -X POST "http://localhost:8000/votes" \
+curl -X POST "http://localhost:8000/api/public/videos/{video_id}/vote" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "VOTER_UUID_AQUI",
     "video_id": "VIDEO_UUID_AQUI"
   }'
-```
-
-## 🛠️ Desarrollo
-
-### Ejecutar con Docker
-```bash
-# Construir y levantar servicios
-docker-compose up --build -d
-
-# Ver logs
-docker-compose logs -f api
-
-# Parar servicios
-docker-compose down
 ```
 
 ### Migraciones Manuales
@@ -149,5 +99,3 @@ alembic history
 - **Documentación**: http://localhost:8000/docs
 - **PostgreSQL**: localhost:5432
 - **Redis**: localhost:6379
-
-¡Las migraciones se ejecutan automáticamente al iniciar el contenedor! 🎉

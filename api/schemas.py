@@ -4,59 +4,6 @@ from datetime import datetime
 from enum import Enum
 import uuid
 
-# User Type Enum
-class UserType(str, Enum):
-    player = "player"
-    voter = "voter"
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    first_name: str
-    last_name: str
-    password1: str
-    password2: str
-    type: UserType
-    city: Optional[str] = None
-    country: Optional[str] = None
-    
-    @validator('password2')
-    def passwords_match(cls, v, values, **kwargs):
-        if 'password1' in values and v != values['password1']:
-            raise ValueError('Las contraseñas no coinciden')
-        return v
-    
-    @validator('password1')
-    def validate_password_strength(cls, v):
-        if len(v) < 8:
-            raise ValueError('La contraseña debe tener al menos 8 caracteres')
-        if not any(c.isupper() for c in v):
-            raise ValueError('La contraseña debe tener al menos una mayúscula')
-        if not any(c.islower() for c in v):
-            raise ValueError('La contraseña debe tener al menos una minúscula')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('La contraseña debe tener al menos un número')
-        return v
-
-class UserResponse(BaseModel):
-    id: uuid.UUID
-    email: str
-    first_name: str
-    last_name: str
-    type: UserType
-    city: Optional[str]
-    country: Optional[str]
-    
-    class Config:
-        from_attributes = True
-
-class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    type: Optional[UserType] = None
-    city: Optional[str] = None
-    country: Optional[str] = None
-
 # Video Status Enum
 class VideoStatus(str, Enum):
     uploaded = "uploaded"
@@ -118,3 +65,51 @@ class VoteResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# Authentication Schemas
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserSignup(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    password: str
+    city: Optional[str] = None
+    country: Optional[str] = None
+    
+    @validator('password')
+    def validate_password_strength(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain at least one number')
+        return v
+
+class UserResponse(BaseModel):
+    id: uuid.UUID
+    email: str
+    first_name: str
+    last_name: str
+    city: Optional[str]
+    country: Optional[str]
+    
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+class UserAuthResponse(BaseModel):
+    user: UserResponse
+    access_token: str
+    token_type: str

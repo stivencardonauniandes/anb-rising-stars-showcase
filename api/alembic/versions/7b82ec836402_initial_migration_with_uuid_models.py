@@ -26,7 +26,6 @@ def upgrade() -> None:
     sa.Column('first_name', sa.String(length=50), nullable=False),
     sa.Column('last_name', sa.String(length=50), nullable=False),
     sa.Column('password', sa.String(length=255), nullable=False),
-    sa.Column('type', sa.Enum('player', 'voter', name='usertype'), nullable=False),
     sa.Column('city', sa.String(length=100), nullable=True),
     sa.Column('country', sa.String(length=100), nullable=True),
     sa.PrimaryKeyConstraint('id')

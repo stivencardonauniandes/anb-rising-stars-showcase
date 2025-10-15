@@ -14,10 +14,16 @@ A FastAPI-based health check service for the ANB Rising Stars Showcase applicati
 ## API Endpoints
 
 ### Health Check Endpoints
-- `GET /` - Root endpoint with API status
 - `GET /health` - General health check endpoint
-- `GET /health/ready` - Readiness check (ready to serve requests)
-- `GET /health/live` - Liveness check (service is alive and responding)
+- `POST /api/auth/signup` - User signup
+- `POST /api/auth/login` - Users authentication and JWT generation
+- `POST /api/videos/upload` - Upload skills video by a player
+- `GET /api/videos` - List all videos from the authenticated user
+- `GET /api/videos/{video_id}` - Get details of a specific user video
+- `DELETE /api/videos/{video_id}` - Delete own video if still allowed
+- `GET /api/public/videos` - List public videos available for voting
+- `POST /api/public/videos/{video_id}/vote` - Cast a vote for a public video
+- `GET /api/public/rankings` - Show current ranking by accumulated votes
 
 ## Quick Start
 
@@ -74,6 +80,22 @@ A FastAPI-based health check service for the ANB Rising Stars Showcase applicati
     └── README.md        # This file
 ```
 
+### Migraciones Manuales
+NOTA: Las migraciones se ejecutan automáticamente al iniciar el contenedor 🎉, asi que solo ejecutelas manualmente de manera consciente 
+
+```bash
+cd api
+
+# Generar nueva migración
+alembic revision --autogenerate -m "Description"
+
+# Aplicar migraciones
+alembic upgrade head
+
+# Ver historial
+alembic history
+```
+
 ### Environment Variables
 Copy `.env.example` to `.env` and configure as needed:
 ```bash
@@ -81,9 +103,16 @@ cp .env.example .env
 ```
 
 ### API Documentation
+
 Once the server is running, visit:
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+## 🔧 URLs de Servicios
+
+- **API**: http://localhost:8000
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
 
 ### Example API Usage
 
@@ -105,6 +134,34 @@ curl -X GET "http://localhost:8000/health/ready"
 **Liveness check:**
 ```bash
 curl -X GET "http://localhost:8000/health/live"
+```
+
+**Player registration:**
+```bash
+curl -X POST "http://localhost:8000/api/auth/signup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john.doe@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "password": "StrongPass123",
+    "city": "Bogotá",
+    "country": "Colombia"
+  }'
+```
+
+**Voter registration:**
+```bash
+curl -X POST "http://localhost:8000/api/auth/signup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "voter@example.com",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "password": "SecurePass456",
+    "city": "Medellín",
+    "country": "Colombia"
+  }'
 ```
 
 ## Docker Commands
@@ -146,11 +203,10 @@ docker-compose down
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. Create a feature branch
+2. Make your changes
+3. Test thoroughly
+4. Submit a pull request
 
 ## License
 

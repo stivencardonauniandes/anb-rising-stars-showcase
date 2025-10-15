@@ -6,10 +6,6 @@ import uuid
 import enum
 from database import Base
 
-class UserType(enum.Enum):
-    player = "player"
-    voter = "voter"
-
 class VideoStatus(enum.Enum):
     uploaded = "uploaded"
     processed = "processed"
@@ -23,7 +19,6 @@ class User(Base):
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     password = Column(String(255), nullable=False)
-    type = Column(SQLEnum(UserType), nullable=False)
     city = Column(String(100), nullable=True)
     country = Column(String(100), nullable=True)
     
@@ -32,7 +27,7 @@ class User(Base):
     votes = relationship("Vote", back_populates="user")
 
     def __repr__(self):
-        return f"<User(email='{self.email}', type='{self.type.value}')>"
+        return f"<User(email='{self.email}')>"
 
 class Video(Base):
     __tablename__ = "videos"
