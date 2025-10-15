@@ -60,9 +60,69 @@ services:
     networks:
       - app-network
 
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - redisinsight_data:/db
+    networks:
+      - app-network
+
+  worker:
+    build: ./worker
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./worker/configs/.env:/app/configs/.env:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9091:9090"
+    depends_on:
+      - worker
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
   redis_data:
+  redisinsight_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   app-network:
