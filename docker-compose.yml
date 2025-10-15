@@ -27,7 +27,6 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: anb_showcase
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -117,12 +116,43 @@ services:
     networks:
       - app-network
 
+  nextcloud:
+    image: nextcloud:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+      - ./next_cloud:/next_cloud
+    environment:
+      - NEXTCLOUD_ADMIN_USER=worker
+      - NEXTCLOUD_ADMIN_PASSWORD=super-secret
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: /next_cloud/entrypoint.sh
+    command: apache2-foreground
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
   redis_data:
   redisinsight_data:
   prometheus_data:
   grafana_data:
+  nextcloud_data:
 
 networks:
   app-network:

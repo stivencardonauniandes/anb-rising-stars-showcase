@@ -216,6 +216,8 @@ func Run(ctx context.Context) error {
 
 func newLogger(level string) (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
+	cfg.Encoding = "console"
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	if level != "" {
 		if err := cfg.Level.UnmarshalText([]byte(level)); err != nil {
 			cfg.Level = zap.NewAtomicLevelAt(zapcore.InfoLevel)
