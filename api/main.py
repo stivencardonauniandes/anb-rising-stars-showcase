@@ -1,12 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
 from pydantic import BaseModel
+from typing import List
 import uvicorn
+
+from database import get_db, Base, engine
+from models import User, Video, Vote
+from schemas import UserCreate, UserResponse, UserUpdate, VideoCreate, VideoResponse, VideoUpdate, VoteCreate, VoteResponse
+from auth import get_password_hash, verify_password
 
 # Create FastAPI app instance
 app = FastAPI(
     title="ANB Rising Stars Showcase API",
-    description="API for the ANB Rising Stars Showcase application - Health Check Service",
+    description="API for the ANB Rising Stars Showcase application",
     version="1.0.0",
 )
 
