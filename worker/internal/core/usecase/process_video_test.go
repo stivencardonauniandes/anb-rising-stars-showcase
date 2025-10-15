@@ -31,10 +31,6 @@ func TestHandleNextSuccess(t *testing.T) {
 		VideoID:    "video-1",
 		SourcePath: "/videos/source.mp4",
 		OutputPath: "/videos/output.mp4",
-		Metadata: map[string]string{
-			"processed_video_id": "processed-1",
-			"processed_url":      "https://cdn/videos/output.mp4",
-		},
 	}
 	video := &domain.Video{ID: "video-1", Status: domain.VideoStatusUploaded}
 	message := &ports.QueueMessage{ID: "msg-1", Task: task}
@@ -70,10 +66,10 @@ func TestHandleNextSuccess(t *testing.T) {
 		if updated.Status != domain.VideoStatusProcessed {
 			t.Fatalf("expected video status processed, got %s", updated.Status)
 		}
-		if updated.ProcessedVideoID == nil || *updated.ProcessedVideoID != "processed-1" {
+		if updated.ProcessedVideoID == nil {
 			t.Fatalf("expected processed video id to be set")
 		}
-		if updated.ProcessedURL == nil || *updated.ProcessedURL != "https://cdn/videos/output.mp4" {
+		if updated.ProcessedURL == nil || *updated.ProcessedURL != PROCESSED_BASE_URL+*updated.ProcessedVideoID {
 			t.Fatalf("expected processed url to be set")
 		}
 		return nil

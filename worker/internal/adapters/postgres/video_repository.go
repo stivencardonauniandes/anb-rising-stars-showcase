@@ -36,7 +36,7 @@ SELECT id,
        original_url,
        processed_url,
        votes
-FROM "VIDEO"
+FROM "videos"
 WHERE id = $1`
 
 	video := &domain.Video{}
@@ -85,7 +85,7 @@ WHERE id = $1`
 
 func (r *VideoRepository) Update(ctx context.Context, video *domain.Video) error {
 	const stmt = `
-UPDATE "VIDEO"
+UPDATE "videos"
 SET status = $2,
     processed_video_id = $3,
     processed_url = $4,

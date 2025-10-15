@@ -26,6 +26,9 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy application code
 COPY . .
 
+# Ensure startup script is executable
+RUN chmod +x start.sh
+
 # Create non-root user
 RUN adduser --disabled-password --gecos '' --shell /bin/bash user \
     && chown -R user:user /app
@@ -37,10 +40,6 @@ EXPOSE 8000
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
-
-# Create startup script
-COPY start.sh .
-RUN chmod +x start.sh
 
 # Run the application
 CMD ["./start.sh"]

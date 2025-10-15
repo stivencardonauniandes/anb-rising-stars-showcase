@@ -10,7 +10,10 @@ import (
 
 	"github.com/alejandro/video-worker/internal/core/domain"
 	"github.com/alejandro/video-worker/internal/core/ports"
+	"github.com/google/uuid"
 )
+
+const PROCESSED_BASE_URL = "/videos/processed/"
 
 type ProcessVideoUseCase struct {
 	queue             ports.MessageQueue
@@ -121,8 +124,8 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 		return err
 	}
 
-	processedVideoID := task.Metadata["processed_video_id"]
-	processedURL := task.Metadata["processed_url"]
+	processedVideoID := uuid.New().String()
+	processedURL := PROCESSED_BASE_URL + processedVideoID
 	if processedURL == "" {
 		processedURL = task.OutputPath
 	}
