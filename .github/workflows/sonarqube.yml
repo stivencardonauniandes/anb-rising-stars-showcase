@@ -1,0 +1,212 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  sonarqube:
+    name: SonarQube Code Analysis
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: anb_showcase_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Disable shallow clones for better analysis
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-sonar-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-sonar-
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      working-directory: ./api
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage pytest-cov pylint bandit
+
+    - name: Set up environment variables
+      run: |
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/anb_showcase_test" >> $GITHUB_ENV
+        echo "REDIS_URL=redis://localhost:6379/0" >> $GITHUB_ENV
+        echo "SECRET_KEY=test-secret-key-for-sonar" >> $GITHUB_ENV
+
+    - name: Run database migrations
+      working-directory: ./api
+      run: |
+        alembic upgrade head
+
+    - name: Run tests with coverage for SonarQube
+      working-directory: ./api
+      run: |
+        coverage run -m pytest tests/ -v --tb=short --junitxml=pytest-report.xml
+        coverage xml -o coverage.xml
+        coverage report
+
+    - name: Run Pylint analysis
+      working-directory: ./api
+      run: |
+        pylint --output-format=json --reports=no $(find . -name "*.py" -not -path "./tests/*" -not -path "./alembic/*") > pylint-report.json || true
+        pylint --output-format=text $(find . -name "*.py" -not -path "./tests/*" -not -path "./alembic/*") || true
+      continue-on-error: true
+
+    - name: Run Bandit security analysis
+      working-directory: ./api
+      run: |
+        bandit -r . -f json -o bandit-report.json -x tests/,alembic/ || true
+        bandit -r . -x tests/,alembic/ || true
+      continue-on-error: true
+
+    - name: Fix coverage paths for SonarQube
+      working-directory: ./api
+      run: |
+        # Fix relative paths in coverage.xml for SonarQube
+        sed -i 's|<source>.*</source>|<source>/github/workspace/api</source>|g' coverage.xml
+        sed -i 's|filename="|filename="api/|g' coverage.xml
+
+    - name: SonarQube Quality Gate Check
+      uses: sonarqube-quality-gate-action@master
+      with:
+        scanMetadataReportFile: api/.scannerwork/report-task.txt
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+    - name: Run SonarQube Scanner
+      uses: sonarsource/sonarqube-scan-action@v2
+      with:
+        projectBaseDir: ./
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+    - name: Wait for Quality Gate
+      uses: sonarqube-quality-gate-action@master
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  sonarqube-pr-decoration:
+    name: SonarQube PR Decoration
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: anb_showcase_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      working-directory: ./api
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage pytest-cov
+
+    - name: Set up environment variables
+      run: |
+        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/anb_showcase_test" >> $GITHUB_ENV
+        echo "REDIS_URL=redis://localhost:6379/0" >> $GITHUB_ENV
+        echo "SECRET_KEY=test-secret-key-for-pr" >> $GITHUB_ENV
+
+    - name: Run database migrations
+      working-directory: ./api
+      run: |
+        alembic upgrade head
+
+    - name: Run tests with coverage for PR
+      working-directory: ./api
+      run: |
+        coverage run -m pytest tests/ -v --tb=short
+        coverage xml -o coverage.xml
+
+    - name: Fix coverage paths for PR
+      working-directory: ./api
+      run: |
+        sed -i 's|<source>.*</source>|<source>/github/workspace/api</source>|g' coverage.xml
+        sed -i 's|filename="|filename="api/|g' coverage.xml
+
+    - name: SonarQube PR Analysis
+      uses: sonarsource/sonarqube-scan-action@v2
+      with:
+        projectBaseDir: ./
+        args: >
+          -Dsonar.pullrequest.key=${{ github.event.number }}
+          -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+          -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
