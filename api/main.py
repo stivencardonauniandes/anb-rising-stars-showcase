@@ -18,6 +18,7 @@ from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token,
     VideoUploadResponse
 )
 from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
+from routers import public
 from datetime import timedelta
 
 # Constants
@@ -48,6 +49,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(public.router)
 
 # Pydantic models
 class HealthResponse(BaseModel):

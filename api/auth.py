@@ -54,9 +54,24 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     except JWTError:
         raise credentials_exception
 
-def get_current_user(db: Session, email: str):
-    """Get current user from database"""
-    from models import User  # Import here to avoid circular imports
+def get_user_from_token(token: str, db: Session):
+    """Get user from JWT token and database session"""
+    from models import User
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
     user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise HTTPException(
@@ -64,3 +79,19 @@ def get_current_user(db: Session, email: str):
             detail="User not found"
         )
     return user
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(lambda: None)
+):
+    """FastAPI dependency to get current user"""
+    from database import get_db
+    
+    # Create the actual dependency function
+    def dependency(
+        creds: HTTPAuthorizationCredentials = Depends(security),
+        database: Session = Depends(get_db)
+    ):
+        return get_user_from_token(creds.credentials, database)
+    
+    return dependency
