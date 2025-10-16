@@ -67,12 +67,33 @@ jobs:
       run: |
         alembic upgrade head
 
-    - name: Run comprehensive tests
+    - name: Run comprehensive test suite for release
       working-directory: ./api
       run: |
-        coverage run -m pytest tests/ -v --tb=short
-        coverage report --fail-under=80
+        echo "🧪 Running complete test suite for release validation..."
+        echo "📋 Release Test Configuration:"
+        echo "  • Coverage threshold: 80%"
+        echo "  • Test mode: Comprehensive"
+        echo "  • Fail on first error: No"
+        echo ""
+        
+        coverage run -m pytest \
+          tests/ \
+          -v \
+          --tb=short \
+          --maxfail=0 \
+          --durations=10 \
+          --strict-markers \
+          --junitxml=pytest-report.xml \
+          || (echo "❌ Tests failed - Release blocked" && exit 1)
+        
+        echo ""
+        echo "📊 Validating coverage threshold..."
+        coverage report --fail-under=80 --show-missing
         coverage html
+        
+        echo ""
+        echo "✅ Release validation completed successfully!"
 
     - name: Upload coverage for release
       uses: actions/upload-artifact@v4

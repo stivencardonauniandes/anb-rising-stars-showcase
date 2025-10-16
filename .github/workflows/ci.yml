@@ -64,7 +64,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install coverage pytest-cov
+        echo "✅ Dependencies installed"
 
     - name: Set up environment variables
       run: |
@@ -77,13 +77,40 @@ jobs:
       run: |
         alembic upgrade head
 
-    - name: Run tests with coverage
+    - name: Run comprehensive test suite with coverage
       working-directory: ./api
       run: |
-        coverage run -m pytest tests/ -v --tb=short
-        coverage report
+        echo "🧪 Starting comprehensive test execution..."
+        echo "📊 Test Configuration:"
+        echo "  • Total test files: $(find tests/ -name 'test_*.py' | wc -l)"
+        echo "  • Python version: $(python --version)"
+        echo "  • Pytest version: $(python -m pytest --version)"
+        echo ""
+        
+        # Run all tests with coverage, parallel execution, and detailed reporting
+        coverage run -m pytest \
+          tests/ \
+          -v \
+          --tb=short \
+          --maxfail=0 \
+          --durations=10 \
+          --strict-markers \
+          --disable-warnings \
+          --junitxml=pytest-report.xml \
+          || (echo "❌ Some tests failed" && exit 1)
+        
+        echo ""
+        echo "📈 Generating coverage reports..."
+        coverage report --skip-covered --show-missing
         coverage xml -o coverage.xml
         coverage html -d htmlcov
+        
+        echo ""
+        echo "✅ All tests completed successfully!"
+        echo "📊 Test Results Summary:"
+        echo "  • JUnit Report: pytest-report.xml"
+        echo "  • Coverage XML: coverage.xml" 
+        echo "  • Coverage HTML: htmlcov/"
 
     - name: Upload coverage reports
       uses: actions/upload-artifact@v4

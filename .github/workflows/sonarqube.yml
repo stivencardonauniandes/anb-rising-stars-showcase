@@ -78,12 +78,14 @@ jobs:
       run: |
         alembic upgrade head
 
-    - name: Run tests with coverage for SonarQube
+    - name: Run all tests with coverage for SonarQube
       working-directory: ./api
       run: |
-        coverage run -m pytest tests/ -v --tb=short --junitxml=pytest-report.xml
+        echo "🧪 Running comprehensive test suite for SonarQube analysis..."
+        coverage run -m pytest tests/ -v --tb=short --maxfail=0 --junitxml=pytest-report.xml --durations=10
         coverage xml -o coverage.xml
-        coverage report
+        coverage report --show-missing
+        echo "✅ Test suite completed for SonarQube analysis!"
 
     - name: Run Pylint analysis
       working-directory: ./api
@@ -186,11 +188,13 @@ jobs:
       run: |
         alembic upgrade head
 
-    - name: Run tests with coverage for PR
+    - name: Run all tests with coverage for PR
       working-directory: ./api
       run: |
-        coverage run -m pytest tests/ -v --tb=short
+        echo "🧪 Running full test suite for PR analysis..."
+        coverage run -m pytest tests/ -v --tb=short --maxfail=0 --durations=5
         coverage xml -o coverage.xml
+        echo "✅ PR test suite completed!"
 
     - name: Fix coverage paths for PR
       working-directory: ./api
