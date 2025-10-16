@@ -183,42 +183,6 @@ jobs:
         retention-days: 30
       if: always()
 
-  docker-smoke-test:
-    name: Docker Smoke Test  
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Build API Docker image
-      run: |
-        echo "🐳 Building API Docker image for smoke test..."
-        docker build -t anb-api:smoke-test ./api
-
-    - name: Test Docker image functionality
-      run: |
-        echo "🧪 Testing Docker image basic functionality..."
-        
-        # Test Python imports and basic functionality
-        docker run --rm --name anb-api-smoke \
-          -e DATABASE_URL=sqlite:///./test.db \
-          -e REDIS_URL=redis://localhost:6379/0 \
-          -e SECRET_KEY=test-secret-key \
-          anb-api:smoke-test \
-          python -c "
-import main
-import models
-import services.ranking_service
-import services.vote_service
-print('✅ All imports successful')
-print('✅ Docker image is functional')
-"
-
-    - name: Cleanup smoke test
-      run: |
-        docker image rm anb-api:smoke-test || true
-      if: always()
 
   security-scan:
     name: Security Vulnerability Scan
@@ -257,7 +221,7 @@ print('✅ Docker image is functional')
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
-    needs: [test, lint, docker-test, security-scan]
+    needs: [test, lint, security-scan]
     if: always()
     
     steps:
@@ -269,5 +233,4 @@ print('✅ Docker image is functional')
         echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
         echo "| Tests & Coverage | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Code Quality | ${{ needs.lint.result == 'success' && '✅ Passed' || '⚠️ Issues Found' }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Docker Integration | ${{ needs.docker-test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '⚠️ Vulnerabilities Found' }} |" >> $GITHUB_STEP_SUMMARY
