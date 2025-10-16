@@ -1,0 +1,195 @@
+name: Docker Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'api/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/docker-integration.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'api/**'
+      - 'docker-compose.yml'
+  workflow_dispatch:
+
+jobs:
+  docker-integration-test:
+    name: Docker Integration Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build API Docker image for testing
+      run: |
+        echo "🐳 Building API Docker image..."
+        docker build -t anb-api:test ./api
+        docker images | grep anb-api
+
+    - name: Create test environment file
+      run: |
+        cat > .env.test << 'EOF'
+        DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase
+        REDIS_URL=redis://redis:6379/0
+        SECRET_KEY=test-secret-key-docker-integration
+        ENVIRONMENT=test
+        DEBUG=false
+        EOF
+
+    - name: Create Docker Compose test configuration
+      run: |
+        cat > docker-compose.integration.yml << 'EOF'
+        services:
+          postgres:
+            image: postgres:15-alpine
+            environment:
+              POSTGRES_DB: anb_showcase
+              POSTGRES_USER: postgres
+              POSTGRES_PASSWORD: postgres
+            ports:
+              - "5432:5432"
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U postgres"]
+              interval: 5s
+              timeout: 5s
+              retries: 10
+            networks:
+              - test-network
+
+          redis:
+            image: redis:7-alpine
+            ports:
+              - "6379:6379"
+            healthcheck:
+              test: ["CMD", "redis-cli", "ping"]
+              interval: 5s
+              timeout: 5s
+              retries: 10
+            networks:
+              - test-network
+
+          api:
+            image: anb-api:test
+            environment:
+              - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase
+              - REDIS_URL=redis://redis:6379/0
+              - SECRET_KEY=test-secret-key-docker-integration
+              - ENVIRONMENT=test
+            depends_on:
+              postgres:
+                condition: service_healthy
+              redis:
+                condition: service_healthy
+            networks:
+              - test-network
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+              interval: 10s
+              timeout: 10s
+              retries: 5
+              start_period: 30s
+
+        networks:
+          test-network:
+            driver: bridge
+        EOF
+
+    - name: Start infrastructure services
+      run: |
+        echo "🚀 Starting PostgreSQL and Redis services..."
+        docker compose -f docker-compose.integration.yml up -d postgres redis
+        
+        echo "⏳ Waiting for services to be healthy..."
+        timeout 60s bash -c 'until docker compose -f docker-compose.integration.yml ps postgres | grep -q "healthy"; do sleep 2; done'
+        timeout 60s bash -c 'until docker compose -f docker-compose.integration.yml ps redis | grep -q "healthy"; do sleep 2; done'
+        
+        echo "✅ Infrastructure services are healthy"
+
+    - name: Run database migrations in Docker
+      run: |
+        echo "🔄 Running database migrations..."
+        docker compose -f docker-compose.integration.yml run --rm \
+          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase \
+          api alembic upgrade head
+
+    - name: Run comprehensive tests in Docker
+      run: |
+        echo "🧪 Running complete test suite in Docker environment..."
+        docker compose -f docker-compose.integration.yml run --rm \
+          -e DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase \
+          -e REDIS_URL=redis://redis:6379/0 \
+          -e SECRET_KEY=test-secret-key-docker \
+          api python -m pytest tests/ -v --tb=short --maxfail=0 --durations=5
+
+    - name: Test API endpoints availability
+      run: |
+        echo "🌐 Starting API service..."
+        docker compose -f docker-compose.integration.yml up -d api
+        
+        echo "⏳ Waiting for API to be healthy..."
+        timeout 60s bash -c 'until docker compose -f docker-compose.integration.yml ps api | grep -q "healthy"; do sleep 3; done'
+        
+        echo "🔍 Testing API endpoints..."
+        # Test health endpoints
+        curl -f http://localhost:8000/health
+        curl -f http://localhost:8000/api/health
+        
+        # Test public endpoints (no auth required)
+        curl -f http://localhost:8000/api/public/rankings
+        curl -f http://localhost:8000/api/public/rankings/stats
+        curl -f http://localhost:8000/api/public/rankings/top?limit=5
+        
+        # Test API documentation
+        curl -f http://localhost:8000/docs
+        curl -f http://localhost:8000/openapi.json
+        
+        echo "✅ All API endpoints are responding correctly"
+
+    - name: Test Docker Compose services integration
+      run: |
+        echo "🔗 Testing service integration..."
+        
+        # Test database connection from API
+        docker compose -f docker-compose.integration.yml exec -T api \
+          python -c "
+import os
+import psycopg2
+try:
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    print('✅ PostgreSQL connection successful')
+    conn.close()
+except Exception as e:
+    print(f'❌ PostgreSQL connection failed: {e}')
+    exit(1)
+"
+        
+        # Test Redis connection from API
+        docker compose -f docker-compose.integration.yml exec -T api \
+          python -c "
+import os
+import redis
+try:
+    r = redis.from_url(os.getenv('REDIS_URL'))
+    r.ping()
+    print('✅ Redis connection successful')
+except Exception as e:
+    print(f'❌ Redis connection failed: {e}')
+    exit(1)
+"
+
+    - name: Cleanup and verify
+      run: |
+        echo "🧹 Cleaning up test environment..."
+        docker compose -f docker-compose.integration.yml logs api || true
+        docker compose -f docker-compose.integration.yml down -v --remove-orphans
+        docker image rm anb-api:test || true
+        docker system prune -f || true
+        
+        echo "✅ Docker integration tests completed successfully"
+      if: always()

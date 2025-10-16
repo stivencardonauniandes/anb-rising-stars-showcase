@@ -240,8 +240,8 @@ jobs:
           # Pull the latest version
           docker pull ghcr.io/your-org/anb-api:${{ github.ref_name }}
           
-          # Or use docker-compose
-          docker-compose up --build
+          # Or use docker compose
+          docker compose up --build
           ```
         draft: false
         prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
