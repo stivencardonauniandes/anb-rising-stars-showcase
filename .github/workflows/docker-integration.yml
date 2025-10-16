@@ -2,7 +2,7 @@ name: Docker Integration Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, feature/* ]
     paths:
       - 'api/**'
       - 'docker-compose.yml'
