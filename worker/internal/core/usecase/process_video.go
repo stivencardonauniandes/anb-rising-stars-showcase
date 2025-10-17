@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const PROCESSED_BASE_URL = "/videos/processed/"
+const PROCESSED_BASE_URL = "/processed/"
 
 type ProcessVideoUseCase struct {
 	queue             ports.MessageQueue
@@ -93,6 +93,9 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 		u.logger.Error("failed to download video", zap.Error(err), zap.String("task_id", task.ID))
 		return err
 	}
+	defer func() {
+		_ = rawVideoReader.Close()
+	}()
 
 	videoProcessedReader, err := u.processVideo(ctx, rawVideoReader)
 	if err != nil {
@@ -125,12 +128,8 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context) error {
 	}
 
 	processedVideoID := uuid.New().String()
-	processedURL := PROCESSED_BASE_URL + processedVideoID
-	if processedURL == "" {
-		processedURL = task.OutputPath
-	}
 	processedAt := time.Now()
-	video.MarkProcessed(processedAt, processedVideoID, processedURL)
+	video.MarkProcessed(processedAt, processedVideoID, task.OutputPath)
 	if err := u.repository.Update(ctx, video); err != nil {
 		u.metrics.IncTaskProcessed(string(domain.VideoStatusFailed))
 		u.logger.Error("failed to mark completed", zap.Error(err), zap.String("video_id", task.VideoID))
@@ -154,9 +153,7 @@ func (u *ProcessVideoUseCase) getVideoBinary(ctx context.Context, task domain.Ta
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		_ = reader.Close()
-	}()
+	// Don't close here - the caller is responsible for closing the reader
 	return reader, nil
 }
 
@@ -165,9 +162,18 @@ func (u *ProcessVideoUseCase) uploadProcessedVideo(ctx context.Context, task dom
 		_ = processed.Close()
 	}()
 
+	u.logger.Info("attempting to upload processed video",
+		zap.String("task_id", task.ID),
+		zap.String("video_id", task.VideoID),
+		zap.String("source_path", task.SourcePath),
+		zap.String("output_path", task.OutputPath))
+
 	if err := u.storage.Upload(ctx, task.OutputPath, processed.Reader); err != nil {
+		u.logger.Error("failed to upload processed video", zap.Error(err), zap.String("task_id", task.ID))
 		return err
 	}
+
+	u.logger.Info("successfully uploaded processed video", zap.String("task_id", task.ID), zap.String("output_path", task.OutputPath))
 	return nil
 }
 
@@ -178,21 +184,21 @@ func (u *ProcessVideoUseCase) processVideo(ctx context.Context, rawVideoReader i
 
 	processed, err := u.processor.Process(ctx, rawVideoReader, ports.VideoProcessingOptions{
 		ClipDuration: 30 * time.Second,
-		TargetWidth:  1280,
-		TargetHeight: 720,
+		TargetWidth:  720,
+		TargetHeight: 1280,
 		TargetFormat: "mp4",
 		RemoveAudio:  true,
 		Watermark: &ports.WatermarkOptions{
-			Text:          "water-mark",
+			Text:          "ANB Rising Stars",
 			FontColor:     "white",
 			FontSize:      48,
-			BorderWidth:   2,
-			BorderColor:   "black",
+			BorderWidth:   1,
+			BorderColor:   "gray",
 			Position:      ports.WatermarkBottomRight,
 			MarginX:       40,
 			MarginY:       40,
-			StartDuration: 3 * time.Second,
-			EndDuration:   3 * time.Second,
+			StartDuration: 0 * time.Second,
+			EndDuration:   0 * time.Second,
 		},
 	})
 	if err != nil {

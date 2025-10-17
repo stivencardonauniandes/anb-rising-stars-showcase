@@ -1,25 +1,24 @@
+import logging
 import os
-import requests
 import shutil
-from fastapi import FastAPI, File, HTTPException, Depends, UploadFile, status
+from datetime import timedelta
+from typing import List
+
+import requests
+import uvicorn
+from auth import (create_access_token, get_current_user, get_password_hash,
+                  verify_password, verify_token)
+from database import Base, engine, get_db
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Form
-from moviepy.editor import VideoFileClip
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from pydantic import BaseModel
-from typing import List
-import logging
-import uvicorn
-
-from database import get_db, Base, engine
 from models import User, Video, Vote
-from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token, 
-    UserResponse,
-    VideoUploadResponse
-)
-from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
-from datetime import timedelta
+from moviepy.editor import VideoFileClip
+from pydantic import BaseModel
+from schemas import (Token, UserAuthResponse, UserLogin, UserResponse,
+                     UserSignup, VideoUploadResponse)
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 # Constants
 API_TITLE = "ANB Rising Stars Showcase API"
@@ -175,12 +174,11 @@ async def upload_video(file: UploadFile = File(...), title: str = Form(...)):
         height = video_clip.h
         video_clip.close()
         if duration < 20 or duration > 60:  # Duration must be between 20 and 60 seconds
-            raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)
-        if width < 1920 or height < 1080:  # Resolution must be at least 1080p
-            raise HTTPException(status_code=400, detail=INVALID_VIDEO_RESOLUTION)
+            raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)   
         
-        # Upload video to Nextcloud
-        video_url = upload_video_to_nextcloud(file.file, title)
+        # Upload video to Nextcloud - open the temp file to read it
+        with open(temp_filepath, "rb") as video_file:
+            video_url = upload_video_to_nextcloud(video_file, title)
         return VideoUploadResponse(
             message=FILE_UPLOAD_SUCCESS,
             task_id='1234'
@@ -204,7 +202,7 @@ def upload_video_to_nextcloud(file: File, filename: str) -> str:
             username = "worker"
             password = "super-secret"
             remote_path = f"/raw/{filename}"
-            remote_path_url = webdav_url + f"/remote.php/dav/files{remote_path}"
+            remote_path_url = webdav_url + f"/remote.php/dav/files/worker/{remote_path}"
             response = requests.put(
                 remote_path_url,
                 data=file,
