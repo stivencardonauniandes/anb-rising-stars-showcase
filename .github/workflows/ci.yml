@@ -14,6 +14,7 @@ jobs:
   test:
     name: Run Tests and Generate Coverage
     runs-on: ubuntu-latest
+    environment: PROD
     
     services:
       postgres:
