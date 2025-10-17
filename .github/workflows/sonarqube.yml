@@ -108,20 +108,44 @@ jobs:
         sed -i 's|<source>.*</source>|<source>/github/workspace/api</source>|g' coverage.xml
         sed -i 's|filename="|filename="api/|g' coverage.xml
 
+    - name: Check SonarQube Configuration
+      run: |
+        if [[ -z "${{ secrets.SONAR_TOKEN }}" ]]; then
+          echo "⚠️ SONAR_TOKEN not configured - skipping SonarQube analysis"
+          echo "To enable SonarQube analysis:"
+          echo "1. Create project in SonarCloud (https://sonarcloud.io)"
+          echo "2. Add GitHub secrets:"
+          echo "   - SONAR_TOKEN=your_project_token"
+          echo "   - SONAR_HOST_URL=https://sonarcloud.io"
+          exit 0
+        fi
+        
+        if [[ -z "${{ secrets.SONAR_HOST_URL }}" ]]; then
+          echo "⚠️ SONAR_HOST_URL not configured - using SonarCloud default"
+          echo "SONAR_HOST_URL=https://sonarcloud.io" >> $GITHUB_ENV
+        else
+          echo "SONAR_HOST_URL=${{ secrets.SONAR_HOST_URL }}" >> $GITHUB_ENV
+        fi
+
     - name: Run SonarQube Scanner
+      if: ${{ secrets.SONAR_TOKEN != '' }}
       uses: sonarsource/sonarqube-scan-action@v3.0.0
       with:
         projectBaseDir: ./
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_HOST_URL: ${{ env.SONAR_HOST_URL || 'https://sonarcloud.io' }}
 
-    - name: Check SonarQube Quality Gate Status
+    - name: SonarQube Analysis Status
       run: |
-        echo "✅ SonarQube analysis completed"
-        echo "📊 Check quality gate status in SonarQube dashboard"
-        echo "🔗 SonarQube URL: ${{ secrets.SONAR_HOST_URL }}"
+        if [[ -n "${{ secrets.SONAR_TOKEN }}" ]]; then
+          echo "✅ SonarQube analysis completed"
+          echo "📊 Check results at: ${{ env.SONAR_HOST_URL || 'https://sonarcloud.io' }}"
+        else
+          echo "⏭️ SonarQube analysis skipped - no token configured"
+          echo "📋 Coverage and test results are still available in artifacts"
+        fi
 
   sonarqube-pr-decoration:
     name: SonarQube PR Decoration
@@ -193,6 +217,7 @@ jobs:
         sed -i 's|filename="|filename="api/|g' coverage.xml
 
     - name: SonarQube PR Analysis
+      if: ${{ secrets.SONAR_TOKEN != '' && secrets.SONAR_HOST_URL != '' }}
       uses: sonarsource/sonarqube-scan-action@v3.0.0
       with:
         projectBaseDir: ./
@@ -203,4 +228,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+
+    - name: PR Analysis Status
+      run: |
+        if [[ -n "${{ secrets.SONAR_TOKEN }}" && -n "${{ secrets.SONAR_HOST_URL }}" ]]; then
+          echo "✅ SonarQube PR analysis completed"
+        else
+          echo "⏭️ SonarQube PR analysis skipped - missing configuration"
+          echo "Coverage and test results are still generated for this PR"
+        fi
