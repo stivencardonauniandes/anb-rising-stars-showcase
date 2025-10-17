@@ -13,7 +13,16 @@ while ! curl -f http://localhost/status.php > /dev/null 2>&1; do
   sleep 10
 done
 
-echo "Nextcloud is ready. Creating folders..."
+echo "Nextcloud is ready. Configuring trusted domains..."
+
+# Configure trusted domains via occ command
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 0 --value=localhost"
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 1 --value=nextcloud"
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=127.0.0.1"
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=api"
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=worker"
+
+echo "Trusted domains configured. Creating folders..."
 
 # Run the folder creation script
 /next_cloud/setup_nextcloud_folders.sh

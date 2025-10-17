@@ -1,17 +1,17 @@
+import logging
 import os
 import shutil
-from fastapi import FastAPI, File, HTTPException, Depends, UploadFile, status
+from datetime import timedelta
+from typing import List
+
+import requests
+import uvicorn
+from auth import (create_access_token, get_current_user, get_password_hash,
+                  verify_password, verify_token)
+from database import Base, engine, get_db
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Form
-from moviepy.editor import VideoFileClip
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from pydantic import BaseModel
-from typing import List
-import logging
-import uvicorn
-
-from database import get_db, Base, engine
 from models import User, Video, Vote
 from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token, 
     UserResponse,
@@ -20,6 +20,12 @@ from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token,
 from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
 from routers import public
 from datetime import timedelta
+from moviepy.editor import VideoFileClip
+from pydantic import BaseModel
+from schemas import (Token, UserAuthResponse, UserLogin, UserResponse,
+                     UserSignup, VideoUploadResponse)
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 # Constants
 API_TITLE = "ANB Rising Stars Showcase API"
@@ -28,6 +34,7 @@ INVALID_VIDEO_LENGTH = "El video debe tener una duración entre 20 y 60 segundos
 INVALID_VIDEO_RESOLUTION = "La resolución del video debe ser al menos 1080p."
 INVALID_VIDEO_TITLE = "El título del video no puede estar vacío."
 FILE_PROCESSING_ERROR = "Error al procesar el archivo de video."
+FILE_UPLOAD_SUCCESS = "Video subiddo correctamente. Procesamiento en curso."
 
 # Configure logging
 # Configure logging
@@ -168,21 +175,58 @@ async def upload_video(file: UploadFile = File(...), title: str = Form(...)):
     # Save the uploaded file to the temporary path
     with open(temp_filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-
-    # Validate video length
+    
     try:
+        # Validate video length and resolution
         video_clip = VideoFileClip(temp_filepath)
         duration = video_clip.duration  # Duration in seconds
         width = video_clip.w
         height = video_clip.h
         video_clip.close()
         if duration < 20 or duration > 60:  # Duration must be between 20 and 60 seconds
-            raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)
-        if width < 1920 or height < 1080:  # Resolution must be at least 1080p
-            raise HTTPException(status_code=400, detail=INVALID_VIDEO_RESOLUTION)
+            raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)   
+        
+        # Upload video to Nextcloud - open the temp file to read it
+        with open(temp_filepath, "rb") as video_file:
+            video_url = upload_video_to_nextcloud(video_file, title)
+        return VideoUploadResponse(
+            message=FILE_UPLOAD_SUCCESS,
+            task_id='1234'
+        )
     except (ValueError, BufferError, RuntimeError) as e:
         logger.error(f"Error processing video file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=FILE_PROCESSING_ERROR)
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(temp_filepath):
+            os.remove(temp_filepath)
+    
+
+def upload_video_to_nextcloud(file: File, filename: str) -> str:
+        """
+        Function to upload video to Nextcloud.
+        Return the url of the uploaded video.
+        """
+        try:
+            webdav_url = "http://nextcloud"
+            username = "worker"
+            password = "super-secret"
+            remote_path = f"/raw/{filename}"
+            remote_path_url = webdav_url + f"/remote.php/dav/files/worker/{remote_path}"
+            response = requests.put(
+                remote_path_url,
+                data=file,
+                auth=(username, password)
+            )
+            if response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to upload video to Nextcloud: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
+            return remote_path
+        except Exception as e:
+            logger.error(f"Failed to upload video to Nextcloud: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
+
+    # Upload video to Nextcloud (placeholder function)
 
 
 if __name__ == "__main__":

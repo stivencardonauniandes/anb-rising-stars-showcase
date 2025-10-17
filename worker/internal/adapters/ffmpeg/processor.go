@@ -46,6 +46,11 @@ func NewVideoProcessor(ffmpegPath, ffprobePath, tempDir string, logger *zap.Logg
 		logger = zap.NewNop()
 	}
 
+	// Ensure temp directory exists
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		logger.Error("failed to create temp directory", zap.String("dir", tempDir), zap.Error(err))
+	}
+
 	return &VideoProcessor{
 		ffmpegPath:  ffmpegPath,
 		ffprobePath: ffprobePath,
@@ -68,10 +73,15 @@ func (p *VideoProcessor) Process(ctx context.Context, input io.Reader, opts port
 		_ = os.Remove(inputPath)
 	}()
 
-	if _, err := io.Copy(inputFile, input); err != nil {
+	bytesWritten, err := io.Copy(inputFile, input)
+	if err != nil {
 		_ = inputFile.Close()
 		return nil, fmt.Errorf("ffmpeg processor: write temp input: %w", err)
 	}
+	p.logger.Info("wrote input video to temp file",
+		zap.String("path", inputPath),
+		zap.Int64("bytes", bytesWritten))
+
 	if err := inputFile.Close(); err != nil {
 		return nil, fmt.Errorf("ffmpeg processor: close temp input: %w", err)
 	}
@@ -385,9 +395,14 @@ func buildDrawTextArgs(wm *watermarkConfig, includeEnable bool) string {
 	xExpr, yExpr := positionExpressions(wm.Position, wm.MarginX, wm.MarginY)
 
 	drawArgs := []string{}
-	if wm.FontFile != "" {
-		drawArgs = append(drawArgs, fmt.Sprintf("fontfile='%s'", escapeForFFMPEG(wm.FontFile)))
+
+	// Use the specified font file, or default to DejaVu Sans
+	fontFile := wm.FontFile
+	if fontFile == "" {
+		fontFile = "/usr/share/fonts/ttf-dejavu/DejaVuSans.ttf"
 	}
+	drawArgs = append(drawArgs, fmt.Sprintf("fontfile='%s'", escapeForFFMPEG(fontFile)))
+
 	drawArgs = append(drawArgs,
 		fmt.Sprintf("text='%s'", escapeDrawText(wm.Text)),
 		fmt.Sprintf("fontcolor=%s", wm.FontColor),

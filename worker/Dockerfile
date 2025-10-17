@@ -12,10 +12,10 @@ ENV GO111MODULE=on \
 
 WORKDIR /app
 
-# Install ffmpeg and supporting tooling without leaving behind apk caches.
+# Install ffmpeg, fonts, and supporting tooling without leaving behind apk caches.
 RUN apk update && \
     apk upgrade --no-cache && \
-    apk add --no-cache ffmpeg git
+    apk add --no-cache ffmpeg git ttf-dejavu fontconfig
 
 # Cache module downloads separately.
 COPY go.mod go.sum ./
