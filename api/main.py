@@ -13,6 +13,13 @@ from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.params import Form
 from models import User, Video, Vote
+from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token, 
+    UserResponse,
+    VideoUploadResponse
+)
+from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
+from routers import public
+from datetime import timedelta
 from moviepy.editor import VideoFileClip
 from pydantic import BaseModel
 from schemas import (Token, UserAuthResponse, UserLogin, UserResponse,
@@ -49,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(public.router)
 
 # Pydantic models
 class HealthResponse(BaseModel):

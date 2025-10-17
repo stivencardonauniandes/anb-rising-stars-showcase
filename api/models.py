@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 import enum
 from database import Base
+from database_types import UUID
 
 class VideoStatus(enum.Enum):
     uploaded = "uploaded"
@@ -14,7 +14,7 @@ class VideoStatus(enum.Enum):
 class User(Base):
     __tablename__ = "users"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4, index=True)
     email = Column(String(100), unique=True, index=True, nullable=False)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
@@ -32,10 +32,10 @@ class User(Base):
 class Video(Base):
     __tablename__ = "videos"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
-    raw_video_id = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
-    processed_video_id = Column(UUID(as_uuid=True), nullable=True)
+    id = Column(UUID(), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(UUID(), ForeignKey('users.id'), nullable=False)
+    raw_video_id = Column(UUID(), default=uuid.uuid4, nullable=False)
+    processed_video_id = Column(UUID(), nullable=True)
     title = Column(String(200), nullable=False)
     status = Column(SQLEnum(VideoStatus), nullable=False, default=VideoStatus.uploaded)
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -54,8 +54,8 @@ class Video(Base):
 class Vote(Base):
     __tablename__ = "votes"
     
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), primary_key=True)
-    video_id = Column(UUID(as_uuid=True), ForeignKey('videos.id'), primary_key=True)
+    user_id = Column(UUID(), ForeignKey('users.id'), primary_key=True)
+    video_id = Column(UUID(), ForeignKey('videos.id'), primary_key=True)
     
     # Relationships
     user = relationship("User", back_populates="votes")
