@@ -10,7 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from main import app
 from database import Base, get_db
-from models import User, Video, Vote
+from models.db_models import User, Video, Vote
 from auth import create_access_token, get_password_hash
 
 # Test database setup

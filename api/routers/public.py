@@ -8,7 +8,7 @@ import uuid
 
 from database import get_db
 from dependencies import get_current_user
-from models import User
+from models.db_models import User
 from services.vote_service import vote_service
 from services.ranking_service import ranking_service
 import logging
