@@ -166,6 +166,15 @@ curl -X POST "http://localhost:8000/api/auth/signup" \
 
 ## Test commands
 
+### With custom command
+
+**Run all test with coverage:**
+```bash
+python run_tests.py
+```
+
+### With pytest
+
 **Run all tests:**
 ```bash
 pytest
