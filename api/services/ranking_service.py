@@ -4,11 +4,10 @@ Ranking service for handling video rankings with caching and pagination
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import desc, asc, and_, func
 from typing import Dict, List, Optional
-from models import Video, User
+from models.db_models import Video, User
 from services.cache_service import cache_service
 from datetime import datetime
 import logging
-import uuid
 
 logger = logging.getLogger(__name__)
 

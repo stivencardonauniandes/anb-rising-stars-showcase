@@ -164,6 +164,28 @@ curl -X POST "http://localhost:8000/api/auth/signup" \
   }'
 ```
 
+## Test commands
+
+**Run all tests:**
+```bash
+pytest
+```
+
+**Run only vote tests:**
+```bash
+pytest tests/test_vote_endpoints.py
+```
+
+**Run only ranking tests:**
+```bash
+pytest tests/test_ranking_endpoints.py
+```
+
+**Run specific test class:**
+```bash
+pytest tests/test_vote_endpoints.py::TestVoteEndpoint
+```
+
 ## Docker Commands
 
 **Build the image:**

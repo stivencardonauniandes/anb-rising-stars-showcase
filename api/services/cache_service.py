@@ -4,7 +4,7 @@ Redis cache service for caching rankings and other data
 import redis
 import json
 import os
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any
 import logging
 
 logger = logging.getLogger(__name__)

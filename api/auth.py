@@ -1,11 +1,12 @@
+import os
+
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-import os
-
+from models.db_models import User
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -56,7 +57,6 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
 
 def get_user_from_token(token: str, db: Session):
     """Get user from JWT token and database session"""
-    from models import User
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

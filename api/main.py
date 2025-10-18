@@ -1,31 +1,16 @@
 import logging
 import os
 import shutil
-from datetime import timedelta
-from typing import List
-
 import requests
 import uvicorn
-from auth import (create_access_token, get_current_user, get_password_hash,
-                  verify_password, verify_token)
-from database import Base, engine, get_db
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.params import Form
-from models import User, Video, Vote
-from schemas import ( UserLogin, UserSignup, UserAuthResponse, Token, 
-    UserResponse,
-    VideoUploadResponse
-)
-from auth import get_password_hash, verify_password, create_access_token, verify_token, get_current_user
-from routers import public
-from datetime import timedelta
-from moviepy.editor import VideoFileClip
+
 from pydantic import BaseModel
-from schemas import (Token, UserAuthResponse, UserLogin, UserResponse,
-                     UserSignup, VideoUploadResponse)
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from fastapi.params import Form
+from routers import auth, public
+from schemas.pydantic_schemas import VideoUploadResponse
+from moviepy.editor import VideoFileClip
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
 # Constants
 API_TITLE = "ANB Rising Stars Showcase API"
@@ -58,6 +43,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(public.router)
 
 # Pydantic models
@@ -76,87 +62,6 @@ async def root():
         service=API_TITLE
     )
 
-# Authentication Routes
-@app.post("/api/auth/signup", response_model=UserAuthResponse, status_code=status.HTTP_201_CREATED)
-async def signup(user_data: UserSignup, db: Session = Depends(get_db)):
-    """Register a new user"""
-    # Check if user already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Hash password
-    hashed_password = get_password_hash(user_data.password1)
-    
-    # Create new user
-    db_user = User(
-        email=user_data.email,
-        first_name=user_data.first_name,
-        last_name=user_data.last_name,
-        password=hashed_password,
-        city=user_data.city,
-        country=user_data.country
-    )
-    
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": db_user.email}, expires_delta=access_token_expires
-    )
-    
-    # Return user data and token
-    user_response = UserResponse.model_validate(db_user)
-    return UserAuthResponse(
-        user=user_response,
-        access_token=access_token,
-        token_type="bearer"
-    )
-
-@app.post("/api/auth/login", response_model=UserAuthResponse)
-async def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
-    """Authenticate user and return JWT token"""
-    # Find user by email
-    user = db.query(User).filter(User.email == user_credentials.email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
-    
-    # Verify password
-    if not verify_password(user_credentials.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    
-    # Return user data and token
-    user_response = UserResponse.model_validate(user)
-    return UserAuthResponse(
-        user=user_response,
-        access_token=access_token,
-        token_type="bearer"
-    )
-
-# Protected endpoint example
-@app.get("/api/auth/me", response_model=UserResponse)
-async def get_current_user_info(db: Session = Depends(get_db), email: str = Depends(verify_token)):
-    """Get current authenticated user information"""
-    user = get_current_user(db, email)
-    return UserResponse.model_validate(user)
 
 # Endpoint to upload videos
 @app.post("/api/videos/upload", response_model=VideoUploadResponse)
@@ -180,15 +85,13 @@ async def upload_video(file: UploadFile = File(...), title: str = Form(...)):
         # Validate video length and resolution
         video_clip = VideoFileClip(temp_filepath)
         duration = video_clip.duration  # Duration in seconds
-        width = video_clip.w
-        height = video_clip.h
         video_clip.close()
         if duration < 20 or duration > 60:  # Duration must be between 20 and 60 seconds
             raise HTTPException(status_code=400, detail=INVALID_VIDEO_LENGTH)   
         
         # Upload video to Nextcloud - open the temp file to read it
         with open(temp_filepath, "rb") as video_file:
-            video_url = upload_video_to_nextcloud(video_file, title)
+            upload_video_to_nextcloud(video_file, title)
         return VideoUploadResponse(
             message=FILE_UPLOAD_SUCCESS,
             task_id='1234'

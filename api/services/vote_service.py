@@ -1,13 +1,13 @@
 """
 Vote service for handling video voting logic
 """
+import logging
+import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from fastapi import HTTPException, status
-from models import Vote, Video, User
+from models.db_models import Vote, Video, User
 from services.cache_service import cache_service
-import logging
-import uuid
 
 logger = logging.getLogger(__name__)
 
