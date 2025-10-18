@@ -1,0 +1,11 @@
+# SonarQube ignore file for test directory
+# These are legitimate test credentials and not production secrets
+
+# Test credential patterns - these are safe to ignore in test files
+python:S2068  # Hard-coded credentials
+python:S1313  # Hard-coded IP addresses (if any test IPs)
+
+# Test-specific exclusions
+TEST_.*  # Test constants
+get_test_.*  # Test credential functions
+get_fixture_.*  # Test fixture functions
