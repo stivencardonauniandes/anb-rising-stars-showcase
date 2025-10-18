@@ -1,0 +1,231 @@
+{
+	"info": {
+		"_postman_id": "af29b365-e88c-4019-85e1-2885365ea3b5",
+		"name": "ANB Rising Stars",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49377018",
+		"_collection_link": "https://orange-desert-884875.postman.co/workspace/ANB-RISING-STARS-SHOWCASE~34ed3c4c-00b7-4c25-b2fd-2024921db235/collection/11592842-af29b365-e88c-4019-85e1-2885365ea3b5?action=share&source=collection_link&creator=49377018"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"const accessToken = jsonData.access_token;",
+									"",
+									"pm.environment.set(\"AUTH_TOKEN\", accessToken);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"StrongPass123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/login",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"const accessToken = jsonData.access_token;",
+									"",
+									"pm.environment.set(\"AUTH_TOKEN\", accessToken);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"stiven@example.com\",\n  \"first_name\": \"Stiven\",\n  \"last_name\": \"Cardona\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Medellin\",\n  \"country\": \"Colombia\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Videos",
+			"item": []
+		},
+		{
+			"name": "Votes",
+			"item": []
+		},
+		{
+			"name": "Ranks",
+			"item": []
+		},
+		{
+			"name": "Vote for video",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{AUTH_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/public/videos/{video_id}/vote",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"public",
+						"videos",
+						"{video_id}",
+						"vote"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List ranking",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{AUTH_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/public/rankings/top?limit=5&page=1&sort_by=votes&sort_order=desc",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"public",
+						"rankings",
+						"top"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "5"
+						},
+						{
+							"key": "page",
+							"value": "1"
+						},
+						{
+							"key": "sort_by",
+							"value": "votes"
+						},
+						{
+							"key": "sort_order",
+							"value": "desc"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Estadisticas Rankings",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{AUTH_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/public/rankings/stats",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"public",
+						"rankings",
+						"stats"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
