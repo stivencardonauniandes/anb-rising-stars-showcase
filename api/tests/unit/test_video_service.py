@@ -524,7 +524,50 @@ class TestVideoServiceDatabaseOperations:
         assert "permission to delete" in exc_info.value.detail
         mock_db.delete.assert_not_called()
         mock_db.commit.assert_not_called()
-
+    
+    def test_delete_video_published_raises_exception(self):
+        """Test that deleting a published video raises HTTPException"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = mock_user.id
+        mock_video.status = "published"  # Published video
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        # Should raise 400 HTTPException for attempting to delete published video
+        with pytest.raises(HTTPException) as exc_info:
+            VideoService.delete_video(video_id, mock_user, mock_db)
+        
+        assert exc_info.value.status_code == 400
+        assert "Published videos cannot be deleted" in exc_info.value.detail
+        mock_db.delete.assert_not_called()
+        mock_db.commit.assert_not_called()
+    
+    def test_get_published_videos_success(self):
+        """Test successful retrieval of published videos"""
+        mock_db = MagicMock()
+        
+        mock_videos = [MagicMock(), MagicMock()]
+        mock_db.query.return_value.filter.return_value.all.return_value = mock_videos
+        
+        result = VideoService.get_published_videos(mock_db)
+        
+        assert result == mock_videos
+        mock_db.query.assert_called_once()
+    
+    def test_get_published_videos_case_no_videos(self):
+        """Test retrieval of published videos when none exist"""
+        mock_db = MagicMock()
+        
+        mock_db.query.return_value.filter.return_value.all.return_value = []
+        
+        result = VideoService.get_published_videos(mock_db)
+        
+        assert result == []
+        mock_db.query.assert_called_once()
 
 class TestVideoServiceAdvanced:
     """Advanced video service tests"""
