@@ -58,6 +58,20 @@ func (mr *MockMessageQueueMockRecorder) Ack(ctx, msg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ack", reflect.TypeOf((*MockMessageQueue)(nil).Ack), ctx, msg)
 }
 
+// Fail mocks base method.
+func (m *MockMessageQueue) Fail(ctx context.Context, msg *ports.QueueMessage, err error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Fail", ctx, msg, err)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Fail indicates an expected call of Fail.
+func (mr *MockMessageQueueMockRecorder) Fail(ctx, msg, err any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fail", reflect.TypeOf((*MockMessageQueue)(nil).Fail), ctx, msg, err)
+}
+
 // Fetch mocks base method.
 func (m *MockMessageQueue) Fetch(ctx context.Context) (*ports.QueueMessage, error) {
 	m.ctrl.T.Helper()
@@ -204,39 +218,51 @@ func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
 }
 
 // IncQueueError mocks base method.
-func (m *MockMetrics) IncQueueError() {
+func (m *MockMetrics) IncQueueError(workerID string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IncQueueError")
+	m.ctrl.Call(m, "IncQueueError", workerID)
 }
 
 // IncQueueError indicates an expected call of IncQueueError.
-func (mr *MockMetricsMockRecorder) IncQueueError() *gomock.Call {
+func (mr *MockMetricsMockRecorder) IncQueueError(workerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncQueueError", reflect.TypeOf((*MockMetrics)(nil).IncQueueError))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncQueueError", reflect.TypeOf((*MockMetrics)(nil).IncQueueError), workerID)
 }
 
 // IncTaskProcessed mocks base method.
-func (m *MockMetrics) IncTaskProcessed(status string) {
+func (m *MockMetrics) IncTaskProcessed(status, workerID string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IncTaskProcessed", status)
+	m.ctrl.Call(m, "IncTaskProcessed", status, workerID)
 }
 
 // IncTaskProcessed indicates an expected call of IncTaskProcessed.
-func (mr *MockMetricsMockRecorder) IncTaskProcessed(status any) *gomock.Call {
+func (mr *MockMetricsMockRecorder) IncTaskProcessed(status, workerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncTaskProcessed", reflect.TypeOf((*MockMetrics)(nil).IncTaskProcessed), status)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncTaskProcessed", reflect.TypeOf((*MockMetrics)(nil).IncTaskProcessed), status, workerID)
 }
 
 // ObserveProcessingDuration mocks base method.
-func (m *MockMetrics) ObserveProcessingDuration(status string, d time.Duration) {
+func (m *MockMetrics) ObserveProcessingDuration(status, workerID string, d time.Duration) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ObserveProcessingDuration", status, d)
+	m.ctrl.Call(m, "ObserveProcessingDuration", status, workerID, d)
 }
 
 // ObserveProcessingDuration indicates an expected call of ObserveProcessingDuration.
-func (mr *MockMetricsMockRecorder) ObserveProcessingDuration(status, d any) *gomock.Call {
+func (mr *MockMetricsMockRecorder) ObserveProcessingDuration(status, workerID, d any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObserveProcessingDuration", reflect.TypeOf((*MockMetrics)(nil).ObserveProcessingDuration), status, d)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObserveProcessingDuration", reflect.TypeOf((*MockMetrics)(nil).ObserveProcessingDuration), status, workerID, d)
+}
+
+// SetStreamSize mocks base method.
+func (m *MockMetrics) SetStreamSize(workerID string, size int64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetStreamSize", workerID, size)
+}
+
+// SetStreamSize indicates an expected call of SetStreamSize.
+func (mr *MockMetricsMockRecorder) SetStreamSize(workerID, size any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStreamSize", reflect.TypeOf((*MockMetrics)(nil).SetStreamSize), workerID, size)
 }
 
 // MockVideoProcessor is a mock of VideoProcessor interface.

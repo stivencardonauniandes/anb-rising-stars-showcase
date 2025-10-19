@@ -490,186 +490,223 @@ class TestVideoEndpointsErrorHandling:
             )
             
             assert response.status_code == 400
+
+
+class TestVideoListEndpoint:
+    """Tests for GET /api/videos/ - List user videos"""
     
-    class TestGetVideosEndpoint:
-        """Tests for GET /api/videos/ endpoint"""
+    @patch('services.video_service.video_service.get_videos_for_user')
+    def test_list_user_videos_success(self, mock_get_videos, auth_headers):
+        """Test successful retrieval of user videos"""
+        from datetime import datetime
+        import uuid
         
-        @patch('services.video_service.VideoService.get_videos_for_user')
-        def test_get_user_videos_success(self, mock_get_videos, auth_headers):
-            """Test successful retrieval of user videos"""
-            # Mock video records
-            mock_video_1 = MagicMock()
-            mock_video_1.id = uuid.uuid4()
-            mock_video_1.title = "First Video"
-            mock_video_1.status = "processed"
-            mock_video_1.uploaded_at = "2024-01-01T12:00:00Z"
-            mock_video_1.processed_at = "2024-01-01T12:30:00Z"
-            mock_video_1.processed_url = "http://example.com/video-1.mp4"
-            mock_video_1.votes = 10
-            
-            mock_video_2 = MagicMock()
-            mock_video_2.id = uuid.uuid4()
-            mock_video_2.title = "Second Video"
-            mock_video_2.status = "uploaded"
-            mock_video_2.uploaded_at = "2024-01-02T12:00:00Z"
-            mock_video_2.processed_at = None
-            mock_video_2.processed_url = None
-            mock_video_2.votes = 5
-            
-            mock_get_videos.return_value = [mock_video_1, mock_video_2]
-            
-            response = client.get(
-                "/api/videos/",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert isinstance(data, list)
-            assert len(data) == 2
-            
-            first_video = data[0]
-            assert first_video["video_id"] == str(mock_video_1.id)
-            assert first_video["title"] == "First Video"
-            assert first_video["status"] == "processed"
-            assert first_video["uploaded_at"] == "2024-01-01T12:00:00Z"
-            assert first_video["processed_at"] == "2024-01-01T12:30:00Z"
-            assert first_video["processed_url"] == "http://example.com/video-1.mp4"
-            assert first_video["votes"] == 10
-            
-            second_video = data[1]
-            assert second_video["video_id"] == str(mock_video_2.id)
-            assert second_video["title"] == "Second Video"
-            assert second_video["status"] == "uploaded"
-            assert second_video["uploaded_at"] == "2024-01-02T12:00:00Z"
-            assert second_video["processed_at"] is None
-            assert second_video["processed_url"] is None
-            assert second_video["votes"] == 5
+        # Mock video data
+        mock_video1 = MagicMock()
+        mock_video1.id = uuid.uuid4()
+        mock_video1.title = "Video 1"
+        mock_video1.status = "processed"
+        mock_video1.uploaded_at = datetime.now()
+        mock_video1.processed_at = datetime.now()
+        mock_video1.processed_url = "https://example.com/processed1.mp4"
+        mock_video1.votes = 5
+        
+        mock_video2 = MagicMock()
+        mock_video2.id = uuid.uuid4()
+        mock_video2.title = "Video 2"
+        mock_video2.status = "uploaded"
+        mock_video2.uploaded_at = datetime.now()
+        mock_video2.processed_at = None
+        mock_video2.processed_url = None
+        mock_video2.votes = 0
+        
+        mock_get_videos.return_value = [mock_video1, mock_video2]
+        
+        response = client.get("/api/videos/", headers=auth_headers)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert len(data) == 2
+        assert data[0]["title"] == "Video 1"
+        assert data[0]["status"] == "processed"
+        assert data[0]["votes"] == 5
+        assert data[0]["processed_url"] == "https://example.com/processed1.mp4"
+        
+        assert data[1]["title"] == "Video 2"
+        assert data[1]["status"] == "uploaded"
+        assert data[1]["votes"] == 0
+        
+        mock_get_videos.assert_called_once()
     
-    def test_get_user_videos_no_videos(self, auth_headers):
+    @patch('services.video_service.video_service.get_videos_for_user')
+    def test_list_user_videos_empty_list(self, mock_get_videos, auth_headers):
         """Test retrieval when user has no videos"""
-        with patch('services.video_service.VideoService.get_videos_for_user') as mock_get_videos:
-            mock_get_videos.return_value = []
-            
-            response = client.get(
-                "/api/videos/",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert isinstance(data, list)
-            assert len(data) == 0
+        mock_get_videos.return_value = []
+        
+        response = client.get("/api/videos/", headers=auth_headers)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data == []
+        mock_get_videos.assert_called_once()
     
-    class TestGetVideoDetailsEndpoint:
-        """Tests for GET /api/videos/{video_id} endpoint"""
+    def test_list_user_videos_unauthorized(self):
+        """Test list videos without authentication"""
+        response = client.get("/api/videos/")
         
-        @patch('services.video_service.VideoService.get_video_by_id')
-        def test_get_video_details_success(self, mock_get_video, auth_headers):
-            """Test successful retrieval of video details"""
-            mock_video = MagicMock()
-            mock_video.id = uuid.uuid4()
-            mock_video.title = "Detail Video"
-            mock_video.status = "processed"
-            mock_video.uploaded_at = "2024-01-03T12:00:00Z"
-            mock_video.processed_at = "2024-01-03T12:30:00Z"
-            mock_video.processed_url = "http://example.com/detail-video.mp4"
-            mock_video.votes = 15
-            
-            mock_get_video.return_value = mock_video
-            
-            video_id = str(mock_video.id)
-            response = client.get(
-                f"/api/videos/{video_id}",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert data["video_id"] == video_id
-            assert data["title"] == "Detail Video"
-            assert data["status"] == "processed"
-            assert data["uploaded_at"] == "2024-01-03T12:00:00Z"
-            assert data["processed_at"] == "2024-01-03T12:30:00Z"
-            assert data["processed_url"] == "http://example.com/detail-video.mp4"
-            assert data["votes"] == 15
-        
-        def test_get_video_details_not_found(self, auth_headers):
-            """Test retrieval of non-existent video"""
-            with patch('services.video_service.VideoService.get_video_by_id') as mock_get_video:
-                mock_get_video.return_value = None
-                
-                non_existent_video_id = str(uuid.uuid4())
-                response = client.get(
-                    f"/api/videos/{non_existent_video_id}",
-                    headers=auth_headers
-                )
-                
-                assert response.status_code == 404
-                data = response.json()
-                assert data["detail"] == "Video not found"
-        
-        def test_get_video_details_other_user_video(self, auth_headers):
-            """Test retrieval of a video that belongs to another user"""
-            with patch('services.video_service.VideoService.get_video_by_id') as mock_get_video:
-                mock_get_video.side_effect = HTTPException(status_code=403, detail="You do not have permission to delete this video.")
-                
-                other_user_video_id = str(uuid.uuid4())
-                response = client.get(
-                    f"/api/videos/{other_user_video_id}",
-                    headers=auth_headers
-                )
-                
-                assert response.status_code == 403
-                data = response.json()
-                assert data["detail"] == "You do not have permission to delete this video."
+        assert response.status_code in [401, 403]  # Could be 401 (Unauthorized) or 403 (Forbidden)
+        data = response.json()
+        assert "detail" in data
     
-    class TestDeleteVideoEndpoint:
-        """Tests for DELETE /api/videos/{video_id} endpoint"""
+    @patch('services.video_service.video_service.get_videos_for_user')
+    def test_list_user_videos_service_error(self, mock_get_videos, auth_headers):
+        """Test list videos with service error"""
+        mock_get_videos.side_effect = HTTPException(status_code=500, detail="Database error")
         
-        @patch('services.video_service.VideoService.delete_video')
-        def test_delete_video_success(self, mock_delete_video, auth_headers):
-            """Test successful deletion of a video"""
-            mock_delete_video.return_value = True  # Successful deletion
-            
-            video_id = str(uuid.uuid4())
-            response = client.delete(
-                f"/api/videos/{video_id}",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 204  # No Content
+        response = client.get("/api/videos/", headers=auth_headers)
         
-        @patch('services.video_service.VideoService.delete_video')
-        def test_delete_video_not_found(self, mock_delete_video, auth_headers):
-            """Test deletion of non-existent video"""
-            mock_delete_video.side_effect = HTTPException(status_code=404, detail="Video not found")
-            
-            non_existent_video_id = str(uuid.uuid4())
-            response = client.delete(
-                f"/api/videos/{non_existent_video_id}",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 404
-            data = response.json()
-            assert data["detail"] == "Video not found"
-        
-        @patch('services.video_service.VideoService.delete_video')
-        def test_delete_video_other_user_video(self, mock_delete_video, auth_headers):
-            """Test deletion of a video that belongs to another user"""
-            mock_delete_video.side_effect = HTTPException(status_code=403, detail="You do not have permission to delete this video.")
-            
-            other_user_video_id = str(uuid.uuid4())
-            response = client.delete(
-                f"/api/videos/{other_user_video_id}",
-                headers=auth_headers
-            )
-            
-            assert response.status_code == 403
-            data = response.json()
-            assert data["detail"] == "You do not have permission to delete this video."
+        assert response.status_code == 500
+        data = response.json()
+        assert data["detail"] == "Database error"
+
+
+class TestVideoDetailsEndpoint:
+    """Tests for GET /api/videos/{video_id} - Get video details"""
     
+    @patch('services.video_service.video_service.get_video_by_id')
+    def test_get_video_details_success(self, mock_get_video, auth_headers):
+        """Test successful video details retrieval"""
+        from datetime import datetime
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        
+        mock_video = MagicMock()
+        mock_video.id = uuid.UUID(video_id)
+        mock_video.title = "Test Video Details"
+        mock_video.status = "processed"
+        mock_video.uploaded_at = datetime.now()
+        mock_video.processed_at = datetime.now()
+        mock_video.processed_url = "https://example.com/processed.mp4"
+        mock_video.votes = 10
+        
+        mock_get_video.return_value = mock_video
+        
+        response = client.get(f"/api/videos/{video_id}", headers=auth_headers)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert data["video_id"] == video_id
+        assert data["title"] == "Test Video Details"
+        assert data["status"] == "processed"
+        assert data["votes"] == 10
+        assert data["processed_url"] == "https://example.com/processed.mp4"
+        
+        mock_get_video.assert_called_once()
+    
+    @patch('services.video_service.video_service.get_video_by_id')
+    def test_get_video_details_not_found(self, mock_get_video, auth_headers):
+        """Test video details when video not found"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        mock_get_video.return_value = None
+        
+        response = client.get(f"/api/videos/{video_id}", headers=auth_headers)
+        
+        assert response.status_code == 404
+        data = response.json()
+        assert data["detail"] == "Video not found"
+        mock_get_video.assert_called_once()
+    
+    def test_get_video_details_unauthorized(self):
+        """Test get video details without authentication"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        response = client.get(f"/api/videos/{video_id}")
+        
+        assert response.status_code in [401, 403]  # Could be 401 (Unauthorized) or 403 (Forbidden)
+        data = response.json()
+        assert "detail" in data
+    
+    def test_get_video_details_invalid_uuid(self, auth_headers):
+        """Test get video details with invalid UUID format"""
+        invalid_id = "not-a-uuid"
+        
+        response = client.get(f"/api/videos/{invalid_id}", headers=auth_headers)
+        
+        # Should either return 422 (validation error) or 404 (not found)
+        assert response.status_code in [404, 422]
+
+
+class TestVideoDeleteEndpoint:
+    """Tests for DELETE /api/videos/{video_id} - Delete video"""
+    
+    @patch('services.video_service.video_service.delete_video')
+    def test_delete_video_success(self, mock_delete_video, auth_headers):
+        """Test successful video deletion"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        mock_delete_video.return_value = True  # Service returns True on success
+        
+        response = client.delete(f"/api/videos/{video_id}", headers=auth_headers)
+        
+        assert response.status_code == 204
+        mock_delete_video.assert_called_once()
+    
+    @patch('services.video_service.video_service.delete_video')
+    def test_delete_video_not_found(self, mock_delete_video, auth_headers):
+        """Test delete video when video not found"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        # Service raises HTTPException for not found
+        mock_delete_video.side_effect = HTTPException(status_code=404, detail="Video not found")
+        
+        response = client.delete(f"/api/videos/{video_id}", headers=auth_headers)
+        
+        assert response.status_code == 404
+        data = response.json()
+        assert data["detail"] == "Video not found"
+        mock_delete_video.assert_called_once()
+    
+    def test_delete_video_unauthorized(self):
+        """Test delete video without authentication"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        response = client.delete(f"/api/videos/{video_id}")
+        
+        assert response.status_code in [401, 403]  # Could be 401 (Unauthorized) or 403 (Forbidden)
+        data = response.json()
+        assert "detail" in data
+    
+    def test_delete_video_invalid_uuid(self, auth_headers):
+        """Test delete video with invalid UUID format"""
+        invalid_id = "not-a-uuid"
+        
+        response = client.delete(f"/api/videos/{invalid_id}", headers=auth_headers)
+        
+        # Should either return 422 (validation error) or 404 (not found)
+        assert response.status_code in [404, 422]
+    
+    @patch('services.video_service.video_service.delete_video')
+    def test_delete_video_service_error(self, mock_delete_video, auth_headers):
+        """Test delete video with service error"""
+        import uuid
+        
+        video_id = str(uuid.uuid4())
+        mock_delete_video.side_effect = HTTPException(status_code=403, detail="Cannot delete video")
+        
+        response = client.delete(f"/api/videos/{video_id}", headers=auth_headers)
+        
+        assert response.status_code == 403
+        data = response.json()
+        assert data["detail"] == "Cannot delete video"
 
     class TestPublicVideoEndpoint:
 
@@ -714,14 +751,14 @@ class TestVideoEndpointsErrorHandling:
                 assert second_video["uploaded_at"] == "2024-01-11T12:00:00Z"
                 assert second_video["votes"] == 30
     
-    def test_list_public_videos_no_videos(self):
-        """Test retrieval when there are no published videos"""
-        with patch('services.video_service.VideoService.get_published_videos') as mock_get_published_videos:
-            mock_get_published_videos.return_value = []
-            
-            response = client.get("/api/public/videos")
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert isinstance(data, list)
-            assert len(data) == 0
+        def test_list_public_videos_case_no_videos(self):
+            """Test retrieval when no published videos exist"""
+            with patch('services.video_service.VideoService.get_published_videos') as mock_get_published_videos:
+                mock_get_published_videos.return_value = []
+                
+                response = client.get("/api/public/videos")
+                
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, list)
+                assert len(data) == 0

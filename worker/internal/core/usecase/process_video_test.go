@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,7 +31,6 @@ func TestHandleNextSuccess(t *testing.T) {
 		ID:         "task-1",
 		VideoID:    "video-1",
 		SourcePath: "/videos/source.mp4",
-		OutputPath: "/videos/output.mp4",
 	}
 	video := &domain.Video{ID: "video-1", Status: domain.VideoStatusUploaded}
 	message := &ports.QueueMessage{ID: "msg-1", Task: task}
@@ -52,7 +52,11 @@ func TestHandleNextSuccess(t *testing.T) {
 			Duration: 30 * time.Second,
 		}, nil
 	})
-	storage.EXPECT().Upload(ctx, task.OutputPath, gomock.Any()).DoAndReturn(func(ctx context.Context, path string, reader io.Reader) error {
+	storage.EXPECT().Upload(ctx, gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, path string, reader io.Reader) error {
+		// Verify the path matches /processed/{uuid}.mp4 pattern
+		if !strings.HasPrefix(path, "/processed/") || !strings.HasSuffix(path, ".mp4") {
+			t.Fatalf("expected output path to match /processed/{uuid}.mp4, got %s", path)
+		}
 		data, err := io.ReadAll(reader)
 		if err != nil {
 			return err
@@ -69,18 +73,19 @@ func TestHandleNextSuccess(t *testing.T) {
 		if updated.ProcessedVideoID == nil {
 			t.Fatalf("expected processed video id to be set")
 		}
-		if updated.ProcessedURL == nil || *updated.ProcessedURL != PROCESSED_BASE_URL+*updated.ProcessedVideoID {
-			t.Fatalf("expected processed url to be set")
+		expectedURL := "/processed/" + *updated.ProcessedVideoID + ".mp4"
+		if updated.ProcessedURL == nil || *updated.ProcessedURL != expectedURL {
+			t.Fatalf("expected processed url to be %s, got %v", expectedURL, updated.ProcessedURL)
 		}
 		return nil
 	})
-	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusProcessed))
-	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusProcessed), gomock.Any())
+	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusProcessed), "1")
+	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusProcessed), "1", gomock.Any())
 	queue.EXPECT().Ack(ctx, message).Return(nil)
 
-	uc := NewProcessVideoUseCase(queue, storage, repository, metrics, processor, zap.NewNop(), 0, 3)
+	uc := NewProcessVideoUseCase(queue, storage, repository, metrics, processor, zap.NewNop(), 0, 3, "/processed/")
 
-	err := uc.HandleNext(ctx)
+	err := uc.HandleNext(ctx, "1")
 	if err != nil {
 		t.Fatalf("HandleNext returned error: %v", err)
 	}
@@ -94,9 +99,9 @@ func TestHandleNextQueueNoMessages(t *testing.T) {
 	queue := mocks.NewMockMessageQueue(ctrl)
 	queue.EXPECT().Fetch(ctx).Return(nil, ports.ErrNoMessages)
 
-	uc := NewProcessVideoUseCase(queue, nil, nil, nil, nil, zap.NewNop(), 0, 3)
+	uc := NewProcessVideoUseCase(queue, nil, nil, nil, nil, zap.NewNop(), 0, 3, "/processed/")
 
-	err := uc.HandleNext(ctx)
+	err := uc.HandleNext(ctx, "1")
 	if err != nil {
 		t.Fatalf("expected nil error for no messages, got %v", err)
 	}
@@ -112,11 +117,11 @@ func TestHandleNextQueueFetchError(t *testing.T) {
 
 	expectedErr := errors.New("fetch error")
 	queue.EXPECT().Fetch(ctx).Return(nil, expectedErr)
-	metrics.EXPECT().IncQueueError()
+	metrics.EXPECT().IncQueueError("1")
 
-	uc := NewProcessVideoUseCase(queue, nil, nil, metrics, nil, zap.NewNop(), 0, 3)
+	uc := NewProcessVideoUseCase(queue, nil, nil, metrics, nil, zap.NewNop(), 0, 3, "/processed/")
 
-	err := uc.HandleNext(ctx)
+	err := uc.HandleNext(ctx, "1")
 	if !errors.Is(err, expectedErr) {
 		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
@@ -135,7 +140,6 @@ func TestHandleNextFindByIDError(t *testing.T) {
 		ID:         "task-2",
 		VideoID:    "video-2",
 		SourcePath: "src.mp4",
-		OutputPath: "out.mp4",
 	}
 	message := &ports.QueueMessage{ID: "msg-2", Task: task}
 
@@ -143,12 +147,13 @@ func TestHandleNextFindByIDError(t *testing.T) {
 
 	queue.EXPECT().Fetch(ctx).Return(message, nil)
 	repository.EXPECT().FindByID(ctx, task.VideoID).Return(nil, expectedErr)
-	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusFailed))
-	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusUploaded), gomock.Any())
+	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusFailed), "1")
+	queue.EXPECT().Fail(ctx, message, expectedErr).Return(nil)
+	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusUploaded), "1", gomock.Any())
 
-	uc := NewProcessVideoUseCase(queue, nil, repository, metrics, nil, zap.NewNop(), 0, 3)
+	uc := NewProcessVideoUseCase(queue, nil, repository, metrics, nil, zap.NewNop(), 0, 3, "/processed/")
 
-	err := uc.HandleNext(context.Background())
+	err := uc.HandleNext(context.Background(), "1")
 	if !errors.Is(err, expectedErr) {
 		t.Fatalf("expected %v, got %v", expectedErr, err)
 	}
@@ -169,7 +174,6 @@ func TestHandleNextProcessVideoError(t *testing.T) {
 		ID:         "task-3",
 		VideoID:    "video-3",
 		SourcePath: "source.mp4",
-		OutputPath: "output.mp4",
 	}
 	message := &ports.QueueMessage{ID: "msg-3", Task: task}
 	video := &domain.Video{ID: "video-3", Status: domain.VideoStatusUploaded}
@@ -186,12 +190,13 @@ func TestHandleNextProcessVideoError(t *testing.T) {
 		}
 		return nil
 	})
-	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusFailed))
-	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusFailed), gomock.Any())
+	metrics.EXPECT().IncTaskProcessed(string(domain.VideoStatusFailed), "1")
+	queue.EXPECT().Fail(ctx, message, processErr).Return(nil)
+	metrics.EXPECT().ObserveProcessingDuration(string(domain.VideoStatusFailed), "1", gomock.Any())
 
-	uc := NewProcessVideoUseCase(queue, storage, repository, metrics, processor, zap.NewNop(), 0, 3)
+	uc := NewProcessVideoUseCase(queue, storage, repository, metrics, processor, zap.NewNop(), 0, 3, "/processed/")
 
-	err := uc.HandleNext(ctx)
+	err := uc.HandleNext(ctx, "1")
 	if !errors.Is(err, processErr) {
 		t.Fatalf("expected %v, got %v", processErr, err)
 	}
@@ -215,7 +220,7 @@ func TestProcessVideoSuccess(t *testing.T) {
 		if opts.TargetFormat != "mp4" {
 			t.Fatalf("expected target format mp4, got %s", opts.TargetFormat)
 		}
-		if opts.TargetWidth != 1280 || opts.TargetHeight != 720 {
+		if opts.TargetWidth != 720 || opts.TargetHeight != 1280 {
 			t.Fatalf("unexpected target dimensions: %dx%d", opts.TargetWidth, opts.TargetHeight)
 		}
 		if opts.Watermark == nil || opts.Watermark.Position != ports.WatermarkBottomRight {
@@ -273,9 +278,9 @@ func TestProcessVideoUploadError(t *testing.T) {
 
 	storage.EXPECT().Upload(ctx, "output.mp4", gomock.Any()).Return(expectedErr)
 
-	uc := &ProcessVideoUseCase{storage: storage, processor: processor}
+	uc := &ProcessVideoUseCase{storage: storage, processor: processor, logger: zap.NewNop()}
 
-	err := uc.uploadProcessedVideo(ctx, domain.Task{OutputPath: "output.mp4"}, &ports.ProcessedVideo{Reader: io.NopCloser(bytes.NewBufferString("processed"))})
+	err := uc.uploadProcessedVideo(ctx, "output.mp4", &ports.ProcessedVideo{Reader: io.NopCloser(bytes.NewBufferString("processed"))})
 	if !errors.Is(err, expectedErr) {
 		t.Fatalf("expected %v, got %v", expectedErr, err)
 	}

@@ -22,6 +22,7 @@ type StreamQueue struct {
 	blockTimeout  time.Duration
 	maxDeliveries int
 	logger        *zap.Logger
+	metrics       ports.Metrics
 }
 
 func NewStreamQueue(
@@ -33,6 +34,7 @@ func NewStreamQueue(
 	blockTimeout time.Duration,
 	maxDeliveries int,
 	logger *zap.Logger,
+	metrics ports.Metrics,
 ) (*StreamQueue, error) {
 	if logger == nil {
 		logger = zap.NewNop()
@@ -51,10 +53,22 @@ func NewStreamQueue(
 		blockTimeout:  blockTimeout,
 		maxDeliveries: maxDeliveries,
 		logger:        logger,
+		metrics:       metrics,
 	}, nil
 }
 
 func (q *StreamQueue) Fetch(ctx context.Context) (*ports.QueueMessage, error) {
+	// Get and record stream size
+	if q.metrics != nil {
+		streamSize, err := q.getStreamSize(ctx)
+		if err != nil {
+			q.logger.Warn("failed to get stream size", zap.Error(err))
+		} else {
+			q.metrics.SetStreamSize(q.consumer, streamSize)
+			q.logger.Debug("stream size", zap.Int64("size", streamSize), zap.String("worker", q.consumer))
+		}
+	}
+
 	args := &redislib.XReadGroupArgs{
 		Group:    q.group,
 		Consumer: q.consumer,
@@ -113,7 +127,6 @@ func (q *StreamQueue) Fail(ctx context.Context, msg *ports.QueueMessage, reason 
 		"task_id":     msg.Task.ID,
 		"video_id":    msg.Task.VideoID,
 		"source_path": msg.Task.SourcePath,
-		"output_path": msg.Task.OutputPath,
 		"attempt":     msg.Task.Attempt + 1,
 	}
 	if reason != nil {
@@ -140,8 +153,6 @@ func hydrateTask(values map[string]any) domain.Task {
 			task.VideoID = strVal
 		case "source_path":
 			task.SourcePath = strVal
-		case "output_path":
-			task.OutputPath = strVal
 		case "attempt":
 			if attempt, err := strconv.Atoi(strVal); err == nil {
 				task.Attempt = attempt
@@ -160,4 +171,8 @@ func toRawMap(values map[string]any) map[string]any {
 		out[k] = v
 	}
 	return out
+}
+
+func (q *StreamQueue) getStreamSize(ctx context.Context) (int64, error) {
+	return q.client.XLen(ctx, q.stream).Result()
 }
