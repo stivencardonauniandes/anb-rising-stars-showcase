@@ -378,6 +378,10 @@ class VideoService:
             logger.warning(f"Unauthorized delete attempt: video_id='{video_id}' by user_id='{current_user.id}'")
             raise HTTPException(status_code=403, detail="You do not have permission to delete this video.")
         
+        if video.status == "published":
+            logger.warning(f"Attempt to delete published video: video_id='{video_id}' by user_id='{current_user.id}'")
+            raise HTTPException(status_code=400, detail="Published videos cannot be deleted.")
+        
         video.status = "deleted"
         db.commit()
         
