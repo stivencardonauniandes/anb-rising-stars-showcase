@@ -38,7 +38,7 @@ def upgrade() -> None:
     sa.Column('raw_video_id', sa.UUID(), nullable=False),
     sa.Column('processed_video_id', sa.UUID(), nullable=True),
     sa.Column('title', sa.String(length=200), nullable=False),
-    sa.Column('status', sa.Enum('uploaded', 'processed', 'deleted', name='videostatus'), nullable=False),
+    sa.Column('status', sa.Enum('uploaded', 'processed', 'deleted', 'published', name='videostatus'), nullable=False),
     sa.Column('uploaded_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('original_url', sa.String(length=500), nullable=False),
