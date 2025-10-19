@@ -44,7 +44,7 @@ async def list_user_videos(current_user: User = Depends(get_current_user), db: S
     """
     Retrieve a list of videos uploaded by the authenticated user
     """
-    logger.info(f"Fetching videos for user: email='{current_user.email}'")
+    logger.info(f"Fetching videos for user: user='{current_user.id}'")
     
     videos = video_service.get_videos_for_user(current_user, db)
 
@@ -63,7 +63,7 @@ async def list_user_videos(current_user: User = Depends(get_current_user), db: S
             video_response.processed_url = video.processed_url
         response_list.append(video_response)
     
-    logger.info(f"Retrieved {len(videos)} videos for user: email='{current_user.email}'")
+    logger.info(f"Retrieved {len(videos)} videos for user: user='{current_user.id}'")
     return response_list
 
 
@@ -72,11 +72,11 @@ async def get_video_details(video_id: str, current_user: User = Depends(get_curr
     """
     Retrieve details of a specific video by ID for the authenticated user
     """
-    logger.info(f"Fetching video details: video_id='{video_id}' for user: email='{current_user.email}'")
+    logger.info(f"Fetching video details: video_id='{video_id}' for user: user='{current_user.id}'")
     
     video = video_service.get_video_by_id(video_id, current_user, db)
     if not video:
-        logger.warning(f"Video not found: video_id='{video_id}' for user: email='{current_user.email}'")
+        logger.warning(f"Video not found: video_id='{video_id}'")
         raise HTTPException(status_code=404, detail="Video not found")
 
     video_response = VideoResponse(
@@ -91,7 +91,7 @@ async def get_video_details(video_id: str, current_user: User = Depends(get_curr
     if video.processed_url:
         video_response.processed_url = video.processed_url
 
-    logger.info(f"Retrieved video details: video_id='{video_id}' for user: email='{current_user.email}'")
+    logger.info(f"Retrieved video details: video_id='{video_id}'")
     return video_response
 
 @router.delete("/{video_id}", status_code=204)
@@ -99,14 +99,14 @@ async def delete_video(video_id: str, current_user: User = Depends(get_current_u
     """
     Delete a specific video by ID for the authenticated user
     """
-    logger.info(f"Delete request for video: video_id='{video_id}' by user: email='{current_user.email}'")
+    logger.info(f"Delete request for video: video_id='{video_id}'")
     
     success = video_service.delete_video(video_id, current_user, db)
     if not success:
-        logger.warning(f"Video not found for deletion: video_id='{video_id}' by user: email='{current_user.email}'")
+        logger.warning(f"Video not found for deletion: video_id='{video_id}'")
         raise HTTPException(status_code=404, detail="Video not found")
     
-    logger.info(f"Video deleted successfully: video_id='{video_id}' by user: email='{current_user.email}'")
+    logger.info(f"Video deleted successfully: video_id='{video_id}'")
     return {
         "video_id": video_id,
         "message": DELETE_VIDEO_SUCCESS_MESSAGE
