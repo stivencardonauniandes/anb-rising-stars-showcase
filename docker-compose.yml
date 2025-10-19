@@ -78,7 +78,7 @@ services:
       - postgres
       - redis
     volumes:
-      - ./worker/configs/.env:/app/configs/.env:ro
+      - ./worker/configs:/app/configs:ro
     ports:
       - "9090:9090"
     restart: unless-stopped
