@@ -3,6 +3,8 @@ Tests for video management endpoints
 """
 import io
 import pytest
+import uuid
+
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 
@@ -705,3 +707,58 @@ class TestVideoDeleteEndpoint:
         assert response.status_code == 403
         data = response.json()
         assert data["detail"] == "Cannot delete video"
+
+    class TestPublicVideoEndpoint:
+
+        def test_list_public_videos(self):
+            """Test retrieval of published videos"""
+            with patch('services.video_service.VideoService.get_published_videos') as mock_get_published_videos:
+                # Mock published video records
+                mock_video_1 = MagicMock()
+                mock_video_1.id = uuid.uuid4()
+                mock_video_1.title = "Public Video 1"
+                mock_video_1.status = "published"
+                mock_video_1.uploaded_at = "2024-01-10T12:00:00Z"
+                mock_video_1.votes = 20
+                
+                mock_video_2 = MagicMock()
+                mock_video_2.id = uuid.uuid4()
+                mock_video_2.title = "Public Video 2"
+                mock_video_2.status = "published"
+                mock_video_2.uploaded_at = "2024-01-11T12:00:00Z"
+                mock_video_2.votes = 30
+                
+                mock_get_published_videos.return_value = [mock_video_1, mock_video_2]
+                
+                response = client.get("/api/public/videos")
+                
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, list)
+                assert len(data) == 2
+                
+                first_video = data[0]
+                assert first_video["video_id"] == str(mock_video_1.id)
+                assert first_video["title"] == "Public Video 1"
+                assert first_video["status"] == "published"
+                assert first_video["uploaded_at"] == "2024-01-10T12:00:00Z"
+                assert first_video["votes"] == 20
+                
+                second_video = data[1]
+                assert second_video["video_id"] == str(mock_video_2.id)
+                assert second_video["title"] == "Public Video 2"
+                assert second_video["status"] == "published"
+                assert second_video["uploaded_at"] == "2024-01-11T12:00:00Z"
+                assert second_video["votes"] == 30
+    
+        def test_list_public_videos_case_no_videos(self):
+            """Test retrieval when no published videos exist"""
+            with patch('services.video_service.VideoService.get_published_videos') as mock_get_published_videos:
+                mock_get_published_videos.return_value = []
+                
+                response = client.get("/api/public/videos")
+                
+                assert response.status_code == 200
+                data = response.json()
+                assert isinstance(data, list)
+                assert len(data) == 0
