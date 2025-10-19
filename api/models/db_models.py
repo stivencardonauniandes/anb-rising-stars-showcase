@@ -49,7 +49,8 @@ class Video(Base):
     vote_records = relationship("Vote", back_populates="video")
 
     def __repr__(self):
-        return f"<Video(id='{self.id}', title='{self.title}', status='{self.status.value}')>"
+        status_value = self.status.value if self.status else 'None'
+        return f"<Video(id='{self.id}', title='{self.title}', status='{status_value}')>"
 
 class Vote(Base):
     __tablename__ = "votes"

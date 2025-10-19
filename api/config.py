@@ -60,8 +60,8 @@ class Config:
                 socket.gethostbyname("nextcloud")
                 # Can resolve 'nextcloud', likely in Docker network
                 return base_url
-            except socket.gaierror:
-                # Can't resolve 'nextcloud', likely local development
+            except (socket.gaierror, OSError):
+                # Can't resolve 'nextcloud' or network error, likely local development
                 return "http://localhost:8080"
         
         return base_url
