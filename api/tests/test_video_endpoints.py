@@ -390,9 +390,10 @@ class TestVideoUploadEndpoint:
 class TestVideoEndpointsIntegration:
     """Integration tests for video endpoints"""
     
+    @patch('services.video_service.VideoService.post_message_to_redis_stream')
     @patch('services.video_service.VideoService.upload_to_nextcloud')
     @patch('services.video_service.VideoService.validate_video_properties')
-    def test_upload_video_full_flow_mock(self, mock_validate, mock_upload, auth_headers):
+    def test_upload_video_full_flow_mock(self, mock_validate, mock_upload, mock_post_message_to_redis_stream, auth_headers):
         """Test the full upload flow with mocked external dependencies"""
         # Mock video validation to return valid properties
         mock_validate.return_value = {"duration": 30.0}
