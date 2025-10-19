@@ -9,6 +9,7 @@ class VideoStatus(str, Enum):
     uploaded = "uploaded"
     processed = "processed"
     deleted = "deleted"
+    published = "published"
 
 class VideoCreate(BaseModel):
     user_id: uuid.UUID

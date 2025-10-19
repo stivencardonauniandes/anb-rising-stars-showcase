@@ -11,6 +11,8 @@ from dependencies import get_current_user
 from models.db_models import User
 from services.vote_service import vote_service
 from services.ranking_service import ranking_service
+from services.video_service import video_service
+from schemas.pydantic_schemas import VideoResponse
 import logging
 
 logger = logging.getLogger(__name__)
@@ -168,3 +170,36 @@ async def get_vote_status(
         "has_voted": has_voted,
         "user_id": str(current_user.id)
     }
+
+@router.get("/videos")
+async def list_public_videos(
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieve a paginated list of published videos
+    
+    - **No authentication required**
+    - **Only published videos are returned**
+    
+    Returns paginated list of published videos
+    """
+    result = video_service.get_published_videos(
+        db=db,
+    )
+
+    video_list = []
+    for video in result:
+        video_response = VideoResponse(
+            video_id=video.id,
+            title=video.title,
+            status=video.status,
+            uploaded_at=video.uploaded_at,
+            votes=video.votes,
+        )
+        if video.processed_at:
+            video_response.processed_at = video.processed_at
+        if video.processed_url:
+            video_response.processed_url = video.processed_url
+        video_list.append(video_response)
+    
+    return video_list

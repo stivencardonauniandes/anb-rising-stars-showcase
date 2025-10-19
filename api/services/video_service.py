@@ -378,12 +378,28 @@ class VideoService:
             logger.warning(f"Unauthorized delete attempt: video_id='{video_id}' by user_id='{current_user.id}'")
             raise HTTPException(status_code=403, detail="You do not have permission to delete this video.")
         
+        if video.status == "published":
+            logger.warning(f"Attempt to delete published video: video_id='{video_id}' by user_id='{current_user.id}'")
+            raise HTTPException(status_code=400, detail="Published videos cannot be deleted.")
+        
         video.status = "deleted"
         db.commit()
         
         logger.info(f"Video deleted: video_id='{video_id}' by user_id='{current_user.id}'")
 
         return True
+    
+    @classmethod
+    def get_published_videos(cls, db: Session) -> list[Video]:
+        """
+        Retrieve a list of published videos
+        
+        Returns:
+            list[Video]: List of published videos
+        """
+        videos = db.query(Video).filter(Video.status == 'published').all()
+        logger.info(f"Retrieved {len(videos)} published videos")
+        return videos
 
 
 # Create service instance

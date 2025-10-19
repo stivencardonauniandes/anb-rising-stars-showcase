@@ -10,6 +10,7 @@ class VideoStatus(enum.Enum):
     uploaded = "uploaded"
     processed = "processed"
     deleted = "deleted"
+    published = "published"
 
 class User(Base):
     __tablename__ = "users"

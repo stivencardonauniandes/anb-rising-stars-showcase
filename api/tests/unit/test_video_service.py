@@ -396,3 +396,306 @@ class TestVideoServiceIntegration:
         
         # Verify cleanup was called even though validation failed
         mock_cleanup.assert_called_once_with("temp_file.mp4")
+
+
+class TestVideoServiceDatabaseOperations:
+    """Test video service database operations"""
+    
+    @patch('services.video_service.uuid.uuid4')
+    def test_get_videos_for_user_success(self, mock_uuid):
+        """Test successful retrieval of user videos"""
+        mock_uuid.return_value = uuid.UUID('12345678-1234-5678-9012-123456789012')
+        
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        mock_videos = [MagicMock(), MagicMock()]
+        mock_db.query.return_value.filter.return_value.all.return_value = mock_videos
+        
+        result = VideoService.get_videos_for_user(mock_user, mock_db)
+        
+        assert result == mock_videos
+        mock_db.query.assert_called_once()
+    
+    def test_get_video_by_id_success(self):
+        """Test successful video retrieval by ID"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = mock_user.id
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        result = VideoService.get_video_by_id(video_id, mock_user, mock_db)
+        
+        assert result == mock_video
+        mock_db.query.assert_called_once()
+    
+    def test_get_video_by_id_not_found(self):
+        """Test video retrieval when video doesn't exist"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+        
+        result = VideoService.get_video_by_id(video_id, mock_user, mock_db)
+        
+        assert result is None
+        mock_db.query.assert_called_once()
+    
+    def test_get_video_by_id_wrong_user(self):
+        """Test video retrieval by different user"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = uuid.uuid4()  # Different user
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        # Should raise 403 HTTPException for unauthorized access
+        with pytest.raises(HTTPException) as exc_info:
+            VideoService.get_video_by_id(video_id, mock_user, mock_db)
+        
+        assert exc_info.value.status_code == 403
+        assert "permission to access" in exc_info.value.detail
+    
+    def test_delete_video_success(self):
+        """Test successful video deletion"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = mock_user.id
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        # Call the delete method
+        result = VideoService.delete_video(video_id, mock_user, mock_db)
+        
+        # Verify the video status was set to "deleted"
+        assert mock_video.status == "deleted"
+        # Verify database commit was called
+        mock_db.commit.assert_called_once()
+        # Verify the method returns True
+        assert result is True
+    
+    def test_delete_video_not_found(self):
+        """Test video deletion when video doesn't exist"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+        
+        # Should raise 404 HTTPException
+        with pytest.raises(HTTPException) as exc_info:
+            VideoService.delete_video(video_id, mock_user, mock_db)
+        
+        assert exc_info.value.status_code == 404
+        assert "Video not found" in exc_info.value.detail
+        mock_db.delete.assert_not_called()
+        mock_db.commit.assert_not_called()
+    
+    def test_delete_video_wrong_user(self):
+        """Test video deletion by different user"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = uuid.uuid4()  # Different user
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        # Should raise 403 HTTPException for unauthorized deletion
+        with pytest.raises(HTTPException) as exc_info:
+            VideoService.delete_video(video_id, mock_user, mock_db)
+        
+        assert exc_info.value.status_code == 403
+        assert "permission to delete" in exc_info.value.detail
+        mock_db.delete.assert_not_called()
+        mock_db.commit.assert_not_called()
+    
+    def test_delete_video_published_raises_exception(self):
+        """Test that deleting a published video raises HTTPException"""
+        mock_db = MagicMock()
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        
+        video_id = str(uuid.uuid4())
+        mock_video = MagicMock()
+        mock_video.user_id = mock_user.id
+        mock_video.status = "published"  # Published video
+        mock_db.query.return_value.filter.return_value.first.return_value = mock_video
+        
+        # Should raise 400 HTTPException for attempting to delete published video
+        with pytest.raises(HTTPException) as exc_info:
+            VideoService.delete_video(video_id, mock_user, mock_db)
+        
+        assert exc_info.value.status_code == 400
+        assert "Published videos cannot be deleted" in exc_info.value.detail
+        mock_db.delete.assert_not_called()
+        mock_db.commit.assert_not_called()
+    
+    def test_get_published_videos_success(self):
+        """Test successful retrieval of published videos"""
+        mock_db = MagicMock()
+        
+        mock_videos = [MagicMock(), MagicMock()]
+        mock_db.query.return_value.filter.return_value.all.return_value = mock_videos
+        
+        result = VideoService.get_published_videos(mock_db)
+        
+        assert result == mock_videos
+        mock_db.query.assert_called_once()
+    
+    def test_get_published_videos_case_no_videos(self):
+        """Test retrieval of published videos when none exist"""
+        mock_db = MagicMock()
+        
+        mock_db.query.return_value.filter.return_value.all.return_value = []
+        
+        result = VideoService.get_published_videos(mock_db)
+        
+        assert result == []
+        mock_db.query.assert_called_once()
+
+class TestVideoServiceAdvanced:
+    """Advanced video service tests"""
+    
+    @patch('services.video_service.VideoService.post_message_to_redis_stream')
+    @patch('services.video_service.VideoService.cleanup_temp_file')
+    @patch('services.video_service.VideoService.upload_to_nextcloud')
+    @patch('services.video_service.VideoService.validate_video_properties')
+    @patch('services.video_service.VideoService.save_temp_file')
+    @patch('services.video_service.VideoService.validate_file_type')
+    @patch('services.video_service.VideoService.validate_title')
+    @patch('builtins.open', new_callable=mock_open)
+    def test_process_video_upload_with_database_integration(self, mock_file_open, mock_validate_title, 
+                                                          mock_validate_file_type, mock_save_temp_file,
+                                                          mock_validate_properties, mock_upload_nextcloud,
+                                                          mock_cleanup, mock_redis_post):
+        """Test video upload process with database integration"""
+        # Setup mocks
+        mock_validate_title.return_value = "Database Video"
+        mock_save_temp_file.return_value = "temp_db_file.mp4"
+        mock_validate_properties.return_value = {"duration": 45.0}
+        mock_upload_nextcloud.return_value = "/raw/Database Video"
+        
+        mock_upload_file = MagicMock(spec=UploadFile)
+        mock_upload_file.filename = "database_test.mp4"
+        
+        mock_user = MagicMock()
+        mock_user.id = uuid.uuid4()
+        mock_db = MagicMock()
+        
+        # Call method with database parameters
+        result = VideoService.process_video_upload(mock_upload_file, "Database Video", mock_user, mock_db)
+        
+        # Assertions
+        assert isinstance(result, VideoUploadResponse)
+        assert result.message == "Video subido correctamente. Procesamiento en curso."
+        assert result.task_id is not None
+        
+        # Verify all methods were called
+        mock_validate_title.assert_called_once_with("Database Video")
+        mock_validate_file_type.assert_called_once_with(mock_upload_file)
+        mock_save_temp_file.assert_called_once_with(mock_upload_file)
+        mock_validate_properties.assert_called_once_with("temp_db_file.mp4")
+        mock_upload_nextcloud.assert_called_once()
+        mock_cleanup.assert_called_once_with("temp_db_file.mp4")
+    
+    def test_validate_video_properties_edge_cases(self):
+        """Test video validation with edge case durations"""
+        from config import config
+        
+        # Test exactly at boundaries
+        with patch('services.video_service.VideoFileClip') as mock_video_clip:
+            # Test minimum duration (exactly 20 seconds)
+            mock_clip_instance = MagicMock()
+            mock_clip_instance.duration = float(config.VIDEO_MIN_DURATION)
+            mock_video_clip.return_value = mock_clip_instance
+            
+            result = VideoService.validate_video_properties("min_duration.mp4")
+            assert result["duration"] == float(config.VIDEO_MIN_DURATION)
+            mock_clip_instance.close.assert_called_once()
+            
+            # Test maximum duration (exactly 60 seconds)
+            mock_clip_instance.reset_mock()
+            mock_clip_instance.duration = float(config.VIDEO_MAX_DURATION)
+            
+            result = VideoService.validate_video_properties("max_duration.mp4")
+            assert result["duration"] == float(config.VIDEO_MAX_DURATION)
+            mock_clip_instance.close.assert_called()
+    
+    def test_save_temp_file_with_special_characters(self):
+        """Test saving temporary file with special characters in filename"""
+        with patch('services.video_service.shutil.copyfileobj') as mock_copyfile:
+            with patch('builtins.open', mock_open()) as mock_file_open:
+                with patch('services.video_service.uuid.uuid4') as mock_uuid:
+                    mock_uuid.return_value = uuid.UUID('12345678-1234-5678-9012-123456789012')
+                    
+                    mock_upload_file = MagicMock(spec=UploadFile)
+                    mock_upload_file.filename = "vídeo_test_ñ_@#$.mp4"
+                    mock_upload_file.file = BytesIO(b"fake video data")
+                    
+                    result = VideoService.save_temp_file(mock_upload_file)
+                    
+                    expected_filename = "temp_video_12345678-1234-5678-9012-123456789012_vídeo_test_ñ_@#$.mp4"
+                    assert result == expected_filename
+                    mock_file_open.assert_called_once_with(expected_filename, "wb")
+    
+    @patch('services.video_service.requests.put')
+    @patch('services.video_service.config')
+    def test_upload_to_nextcloud_with_timeout(self, mock_config, mock_requests_put):
+        """Test Nextcloud upload with custom timeout"""
+        # Setup mocks
+        mock_config.get_nextcloud_url.return_value = "http://localhost:8080"
+        mock_config.NEXTCLOUD_USERNAME = "timeout_user"
+        mock_config.NEXTCLOUD_PASSWORD = "timeout_pass"
+        mock_config.VIDEO_UPLOAD_TIMEOUT = 600  # Custom timeout
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_requests_put.return_value = mock_response
+        
+        file_data = BytesIO(b"large video data" * 1000)
+        
+        result = VideoService.upload_to_nextcloud(file_data, "large_video.mp4")
+        
+        assert result == "/raw/large_video.mp4"
+        
+        # Verify timeout was used
+        call_args = mock_requests_put.call_args
+        assert call_args[1]['timeout'] == 600
+    
+    @patch('services.video_service.requests.put')
+    @patch('services.video_service.config')
+    def test_upload_to_nextcloud_different_status_codes(self, mock_config, mock_requests_put):
+        """Test Nextcloud upload with different success status codes"""
+        mock_config.get_nextcloud_url.return_value = "http://localhost:8080"
+        mock_config.NEXTCLOUD_USERNAME = "test_user"
+        mock_config.NEXTCLOUD_PASSWORD = "test_pass"
+        mock_config.VIDEO_UPLOAD_TIMEOUT = 300
+        
+        # Test different success status codes
+        success_codes = [200, 201, 204]
+        
+        for status_code in success_codes:
+            mock_response = MagicMock()
+            mock_response.status_code = status_code
+            mock_requests_put.return_value = mock_response
+            
+            file_data = BytesIO(b"test video data")
+            
+            result = VideoService.upload_to_nextcloud(file_data, f"video_{status_code}.mp4")
+            assert result == f"/raw/video_{status_code}.mp4"
