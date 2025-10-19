@@ -339,7 +339,7 @@ class VideoService:
         return videos
     
     @classmethod
-    def get_video_by_id(cls, video_id: str, current_user: User, db: Session) -> Video | None:
+    def get_video_by_id(cls, video_id: str, current_user: User, db: Session) -> Video:
         """
         Retrieve a specific video by ID for the specified user
         
