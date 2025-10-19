@@ -7,8 +7,10 @@ import os
 import uuid
 from unittest.mock import patch, mock_open, MagicMock
 from fastapi import HTTPException, UploadFile
+from sqlalchemy.orm import Session
 from io import BytesIO
 
+from models.db_models import User
 from services.video_service import VideoService
 from schemas.pydantic_schemas import VideoUploadResponse
 
@@ -306,7 +308,7 @@ class TestVideoServiceNextcloudUpload:
 
 class TestVideoServiceIntegration:
     """Test video service integration methods"""
-    
+    @patch('services.video_service.VideoService.post_message_to_redis_stream')
     @patch('services.video_service.VideoService.cleanup_temp_file')
     @patch('services.video_service.VideoService.upload_to_nextcloud')
     @patch('services.video_service.VideoService.validate_video_properties')
@@ -317,19 +319,21 @@ class TestVideoServiceIntegration:
     def test_process_video_upload_success(self, mock_file_open, mock_validate_title, 
                                         mock_validate_file_type, mock_save_temp_file,
                                         mock_validate_properties, mock_upload_nextcloud,
-                                        mock_cleanup):
+                                        mock_cleanup, mock_post_message_to_redis_stream):
         """Test successful complete video upload process"""
         # Setup mocks
         mock_validate_title.return_value = "Clean Title"
         mock_save_temp_file.return_value = "temp_file.mp4"
         mock_validate_properties.return_value = {"duration": 30.0}
         mock_upload_nextcloud.return_value = "/raw/Clean Title"
+        mock_db = MagicMock(spec=Session)
+        mock_user = MagicMock(spec=User)
         
         mock_upload_file = MagicMock(spec=UploadFile)
         mock_upload_file.filename = "test.mp4"
         
         # Call method
-        result = VideoService.process_video_upload(mock_upload_file, "Test Title")
+        result = VideoService.process_video_upload(mock_upload_file, "Test Title", mock_user, mock_db)
         
         # Assertions
         assert isinstance(result, VideoUploadResponse)
@@ -355,9 +359,11 @@ class TestVideoServiceIntegration:
                                                        mock_cleanup):
         """Test video upload process with title validation error"""
         mock_upload_file = MagicMock(spec=UploadFile)
+        mock_db = MagicMock(spec=Session)
+        mock_user = MagicMock(spec=User)
         
         with pytest.raises(HTTPException) as exc_info:
-            VideoService.process_video_upload(mock_upload_file, "")
+            VideoService.process_video_upload(mock_upload_file, "", mock_user, mock_db)
         
         assert exc_info.value.status_code == 400
         assert "Invalid title" in exc_info.value.detail
@@ -382,9 +388,11 @@ class TestVideoServiceIntegration:
         mock_save_temp_file.return_value = "temp_file.mp4"
         
         mock_upload_file = MagicMock(spec=UploadFile)
+        mock_db = MagicMock(spec=Session)
+        mock_user = MagicMock(spec=User)
         
         with pytest.raises(HTTPException):
-            VideoService.process_video_upload(mock_upload_file, "Test Title")
+            VideoService.process_video_upload(mock_upload_file, "Test Title", mock_user, mock_db)
         
         # Verify cleanup was called even though validation failed
         mock_cleanup.assert_called_once_with("temp_file.mp4")

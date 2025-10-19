@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 
-from tests.test_database import client, db_session
+from tests.test_database import client, db_session, test_user, auth_headers
 from schemas.pydantic_schemas import VideoUploadResponse
 
 
@@ -18,7 +18,7 @@ class TestVideoUploadEndpoint:
         return ("file", (filename, io.BytesIO(content), content_type))
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_success(self, mock_process_upload, db_session):
+    def test_upload_video_success(self, mock_process_upload, auth_headers):
         """Test successful video upload"""
         # Mock the service response
         mock_response = VideoUploadResponse(
@@ -37,6 +37,7 @@ class TestVideoUploadEndpoint:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -60,7 +61,7 @@ class TestVideoUploadEndpoint:
         assert uploaded_file.content_type == "video/mp4"
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_with_special_characters_in_title(self, mock_process_upload, db_session):
+    def test_upload_video_with_special_characters_in_title(self, mock_process_upload, auth_headers):
         """Test video upload with special characters in title"""
         mock_response = VideoUploadResponse(
             message="Video subido correctamente. Procesamiento en curso.",
@@ -76,6 +77,7 @@ class TestVideoUploadEndpoint:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -89,7 +91,7 @@ class TestVideoUploadEndpoint:
         title = call_args[0][1]
         assert title == "Título con ñ y acentós! @#$%"
     
-    def test_upload_video_missing_file(self, db_session):
+    def test_upload_video_missing_file(self, auth_headers):
         """Test upload without file parameter"""
         form_data = {
             "title": "Test Video Title"
@@ -97,19 +99,21 @@ class TestVideoUploadEndpoint:
         
         response = client.post(
             "/api/videos/upload",
-            data=form_data
+            data=form_data,
+            headers=auth_headers
         )
         
         assert response.status_code == 422  # Validation error
         data = response.json()
         assert "detail" in data
     
-    def test_upload_video_missing_title(self, db_session):
+    def test_upload_video_missing_title(self, auth_headers):
         """Test upload without title parameter"""
         video_file = self.create_test_video_file()
         
         response = client.post(
             "/api/videos/upload",
+            headers=auth_headers,
             files=[video_file]
         )
         
@@ -117,7 +121,7 @@ class TestVideoUploadEndpoint:
         data = response.json()
         assert "detail" in data
     
-    def test_upload_video_empty_title(self, db_session):
+    def test_upload_video_empty_title(self, auth_headers):
         """Test upload with empty title"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -133,6 +137,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -143,7 +148,7 @@ class TestVideoUploadEndpoint:
             # Check that some validation error occurred
             assert "detail" in data
     
-    def test_upload_video_whitespace_only_title(self, db_session):
+    def test_upload_video_whitespace_only_title(self, auth_headers):
         """Test upload with whitespace-only title"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -159,6 +164,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -166,7 +172,7 @@ class TestVideoUploadEndpoint:
             data = response.json()
             assert data["detail"] == "El título del video no puede estar vacío."
     
-    def test_upload_invalid_file_type(self, db_session):
+    def test_upload_invalid_file_type(self, auth_headers):
         """Test upload with non-video file"""
         # Create a text file instead of video
         text_file = ("file", ("document.txt", io.BytesIO(b"not a video"), "text/plain"))
@@ -183,14 +189,15 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[text_file],
-                data=form_data
+                data=form_data,
+                headers=auth_headers
             )
             
             assert response.status_code == 400
             data = response.json()
             assert data["detail"] == "Tipo de archivo inválido. Se requiere un archivo de video."
     
-    def test_upload_video_too_short(self, db_session):
+    def test_upload_video_too_short(self, auth_headers):
         """Test upload with video shorter than minimum duration"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -206,14 +213,15 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
-                data=form_data
+                data=form_data,
+                headers=auth_headers
             )
             
             assert response.status_code == 400
             data = response.json()
             assert data["detail"] == "El video debe tener una duración entre 20 y 60 segundos."
     
-    def test_upload_video_too_long(self, db_session):
+    def test_upload_video_too_long(self, auth_headers):
         """Test upload with video longer than maximum duration"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -229,6 +237,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -236,7 +245,7 @@ class TestVideoUploadEndpoint:
             data = response.json()
             assert data["detail"] == "El video debe tener una duración entre 20 y 60 segundos."
     
-    def test_upload_video_processing_error(self, db_session):
+    def test_upload_video_processing_error(self, auth_headers):
         """Test upload with video processing error"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -252,6 +261,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -259,7 +269,7 @@ class TestVideoUploadEndpoint:
             data = response.json()
             assert data["detail"] == "Error al procesar el archivo de video."
     
-    def test_upload_video_nextcloud_error(self, db_session):
+    def test_upload_video_nextcloud_error(self, auth_headers):
         """Test upload with Nextcloud storage error"""
         video_file = self.create_test_video_file()
         form_data = {
@@ -275,6 +285,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -283,7 +294,7 @@ class TestVideoUploadEndpoint:
             assert data["detail"] == "Failed to upload video to storage service."
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_different_file_extensions(self, mock_process_upload, db_session):
+    def test_upload_video_different_file_extensions(self, mock_process_upload, auth_headers):
         """Test upload with different video file extensions"""
         mock_response = VideoUploadResponse(
             message="Video subido correctamente. Procesamiento en curso.",
@@ -305,6 +316,7 @@ class TestVideoUploadEndpoint:
             response = client.post(
                 "/api/videos/upload",
                 files=[video_file],
+                headers=auth_headers,
                 data=form_data
             )
             
@@ -313,7 +325,7 @@ class TestVideoUploadEndpoint:
             assert data["task_id"] == "test-task-789"
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_large_file(self, mock_process_upload, db_session):
+    def test_upload_video_large_file(self, mock_process_upload, auth_headers):
         """Test upload with large video file"""
         mock_response = VideoUploadResponse(
             message="Video subido correctamente. Procesamiento en curso.",
@@ -335,6 +347,7 @@ class TestVideoUploadEndpoint:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -343,7 +356,7 @@ class TestVideoUploadEndpoint:
         assert data["task_id"] == "test-task-large"
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_unicode_filename(self, mock_process_upload, db_session):
+    def test_upload_video_unicode_filename(self, mock_process_upload, auth_headers):
         """Test upload with unicode characters in filename"""
         mock_response = VideoUploadResponse(
             message="Video subido correctamente. Procesamiento en curso.",
@@ -359,6 +372,7 @@ class TestVideoUploadEndpoint:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -376,9 +390,10 @@ class TestVideoUploadEndpoint:
 class TestVideoEndpointsIntegration:
     """Integration tests for video endpoints"""
     
+    @patch('services.video_service.VideoService.post_message_to_redis_stream')
     @patch('services.video_service.VideoService.upload_to_nextcloud')
     @patch('services.video_service.VideoService.validate_video_properties')
-    def test_upload_video_full_flow_mock(self, mock_validate, mock_upload, db_session):
+    def test_upload_video_full_flow_mock(self, mock_validate, mock_upload, mock_post_message_to_redis_stream, auth_headers):
         """Test the full upload flow with mocked external dependencies"""
         # Mock video validation to return valid properties
         mock_validate.return_value = {"duration": 30.0}
@@ -394,6 +409,7 @@ class TestVideoEndpointsIntegration:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -412,19 +428,21 @@ class TestVideoEndpointsIntegration:
 class TestVideoEndpointsErrorHandling:
     """Tests for error handling in video endpoints"""
     
-    def test_upload_video_malformed_request(self, db_session):
+    def test_upload_video_malformed_request(self, auth_headers):
         """Test upload with malformed request data"""
         # Send invalid multipart data
+        headers = auth_headers
+        headers["Content-Type"] = "application/json"
         response = client.post(
             "/api/videos/upload",
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             json={"invalid": "data"}
         )
         
         assert response.status_code == 422
     
     @patch('services.video_service.video_service.process_video_upload')
-    def test_upload_video_service_http_exception(self, mock_process_upload, db_session):
+    def test_upload_video_service_http_exception(self, mock_process_upload, auth_headers):
         """Test handling of HTTP exceptions from service"""
         # Mock an HTTP exception (which should be properly handled)
         mock_process_upload.side_effect = HTTPException(
@@ -440,6 +458,7 @@ class TestVideoEndpointsErrorHandling:
         response = client.post(
             "/api/videos/upload",
             files=[video_file],
+            headers=auth_headers,
             data=form_data
         )
         
@@ -448,7 +467,7 @@ class TestVideoEndpointsErrorHandling:
         data = response.json()
         assert data["detail"] == "Service temporarily unavailable"
     
-    def test_upload_video_empty_file(self, db_session):
+    def test_upload_video_empty_file(self, auth_headers):
         """Test upload with empty file"""
         empty_file = ("file", ("empty.mp4", io.BytesIO(b""), "video/mp4"))
         form_data = {
@@ -463,6 +482,7 @@ class TestVideoEndpointsErrorHandling:
             
             response = client.post(
                 "/api/videos/upload",
+                headers=auth_headers,
                 files=[empty_file],
                 data=form_data
             )
