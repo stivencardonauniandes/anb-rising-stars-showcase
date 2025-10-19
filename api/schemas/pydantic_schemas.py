@@ -27,15 +27,11 @@ class VideoCreate(BaseModel):
         return v.strip()
 
 class VideoResponse(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    raw_video_id: uuid.UUID
-    processed_video_id: Optional[uuid.UUID] = None
+    video_id: uuid.UUID
     title: str
     status: VideoStatus
     uploaded_at: datetime
     processed_at: Optional[datetime] = None
-    original_url: str
     processed_url: Optional[str] = None
     votes: int
     model_config = ConfigDict(from_attributes=True)
