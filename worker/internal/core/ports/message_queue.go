@@ -22,4 +22,6 @@ type MessageQueue interface {
 	Fetch(ctx context.Context) (*QueueMessage, error)
 	// Ack acknowledges successful processing and removes the message from the queue.
 	Ack(ctx context.Context, msg *QueueMessage) error
+	// Fail marks a message as failed and optionally requeues it for retry.
+	Fail(ctx context.Context, msg *QueueMessage, err error) error
 }

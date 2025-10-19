@@ -221,6 +221,9 @@ k8s-secrets.yml
 *.zip
 *.rar
 
+#Worker
+worker/bin/
+
 # Monitoring
 prometheus/
 grafana/data/

@@ -124,11 +124,6 @@ func Run(ctx context.Context) error {
 		return fmt.Errorf("init nextcloud storage: %w", err)
 	}
 
-	queue, err := redisadapter.NewStreamQueue(ctx, redisClient, cfg.RedisStream, cfg.RedisGroup, cfg.RedisConsumer, cfg.RedisBlockTimeout, cfg.RedisMaxDeliveries, logger)
-	if err != nil {
-		return fmt.Errorf("init redis stream queue: %w", err)
-	}
-
 	repository := postgresadapter.NewVideoRepository(db, logger)
 	processor := ffmpeg.NewVideoProcessor(os.Getenv("FFMPEG_PATH"), os.Getenv("FFPROBE_PATH"), os.Getenv("VIDEO_TEMP_DIR"), logger)
 
@@ -136,16 +131,6 @@ func Run(ctx context.Context) error {
 	if workerCount <= 0 {
 		workerCount = 1
 	}
-	useCase := usecase.NewProcessVideoUseCase(
-		queue,
-		storage,
-		repository,
-		metricsAdapter,
-		processor,
-		logger,
-		cfg.ProcessingTimeout,
-		cfg.RedisMaxDeliveries,
-	)
 
 	logger.Info("video worker running",
 		zap.Int("worker_pool_size", workerCount),
@@ -162,6 +147,28 @@ func Run(ctx context.Context) error {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
+			workerIDStr := fmt.Sprintf("%d", id)
+			consumerName := fmt.Sprintf("%s-worker-%d", cfg.RedisConsumer, id)
+
+			// Create a queue instance for this worker with unique consumer name
+			queue, err := redisadapter.NewStreamQueue(ctx, redisClient, cfg.RedisStream, cfg.RedisGroup, consumerName, cfg.RedisBlockTimeout, cfg.RedisMaxDeliveries, logger, metricsAdapter)
+			if err != nil {
+				logger.Error("failed to create queue for worker", zap.Int("worker_id", id), zap.Error(err))
+				return
+			}
+
+			useCase := usecase.NewProcessVideoUseCase(
+				queue,
+				storage,
+				repository,
+				metricsAdapter,
+				processor,
+				logger,
+				cfg.ProcessingTimeout,
+				cfg.RedisMaxDeliveries,
+				cfg.ProcessedBaseURL,
+			)
+
 			for {
 				select {
 				case <-workerCtx.Done():
@@ -169,7 +176,7 @@ func Run(ctx context.Context) error {
 				default:
 				}
 
-				if err := useCase.HandleNext(workerCtx); err != nil {
+				if err := useCase.HandleNext(workerCtx, workerIDStr); err != nil {
 					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 						return
 					}

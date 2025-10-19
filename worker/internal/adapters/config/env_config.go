@@ -29,6 +29,7 @@ type Config struct {
 	NextcloudRoot      string
 	NextcloudUsername  string
 	NextcloudPassword  string
+	ProcessedBaseURL   string
 	MetricsAddr        string
 	ShutdownGrace      time.Duration
 }
@@ -63,6 +64,7 @@ func Load(envPaths ...string) (*Config, error) {
 		NextcloudRoot:      getEnv("NEXTCLOUD_ROOT", "/remote.php/dav/files"),
 		NextcloudUsername:  os.Getenv("NEXTCLOUD_USERNAME"),
 		NextcloudPassword:  os.Getenv("NEXTCLOUD_PASSWORD"),
+		ProcessedBaseURL:   getEnv("PROCESSED_BASE_URL", "/processed/"),
 		MetricsAddr:        getEnv("METRICS_ADDR", ":9090"),
 		ShutdownGrace:      getDurationEnv("SHUTDOWN_GRACE", 30*time.Second),
 	}

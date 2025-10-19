@@ -4,7 +4,6 @@ type Task struct {
 	ID         string
 	VideoID    string
 	SourcePath string
-	OutputPath string
 	Attempt    int
 	Metadata   map[string]string
 }
