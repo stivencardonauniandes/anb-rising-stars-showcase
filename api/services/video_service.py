@@ -384,6 +384,18 @@ class VideoService:
         logger.info(f"Video deleted: video_id='{video_id}' by user_id='{current_user.id}'")
 
         return True
+    
+    @classmethod
+    def get_published_videos(cls, db: Session) -> list[Video]:
+        """
+        Retrieve a list of published videos
+        
+        Returns:
+            list[Video]: List of published videos
+        """
+        videos = db.query(Video).filter(Video.status == 'published').all()
+        logger.info(f"Retrieved {len(videos)} published videos")
+        return videos
 
 
 # Create service instance
