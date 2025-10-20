@@ -69,18 +69,10 @@ async def list_user_videos(current_user: User = Depends(get_current_user), db: S
 
 
 @router.get("/{video_id}", response_model=VideoResponse)
-async def get_video_details(video_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_video_details(video_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Retrieve details of a specific video by ID for the authenticated user
     """
-    try:
-        ### sanitize video_id
-        video_id = uuid.UUID(video_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=422,
-            detail="Invalid video ID format"
-        )
     logger.info(f"Fetching video details: video_id='{video_id}' for user: user='{current_user.id}'")
     
     video = video_service.get_video_by_id(video_id, current_user, db)
@@ -104,18 +96,10 @@ async def get_video_details(video_id: str, current_user: User = Depends(get_curr
     return video_response
 
 @router.delete("/{video_id}", status_code=204)
-async def delete_video(video_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def delete_video(video_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Delete a specific video by ID for the authenticated user
     """
-    try:
-        ### sanitize video_id
-        video_id = uuid.UUID(video_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=422,
-            detail="Invalid video ID format"
-        )
     logger.info(f"Delete request for video: video_id='{video_id}'")
     
     success = video_service.delete_video(video_id, current_user, db)
