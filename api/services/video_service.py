@@ -45,9 +45,12 @@ class VideoService:
         Raises:
             HTTPException: If title is invalid
         """
-        if not title or title.strip() == "":
+        cleaned_title = title.strip()
+        if not cleaned_title:
             raise HTTPException(status_code=400, detail=VideoService.INVALID_VIDEO_TITLE)
-        return title.strip()
+        if len(cleaned_title) > 200:
+            raise HTTPException(status_code=400, detail="El título del video no puede tener más de 200 caracteres.")
+        return cleaned_title
     
     @staticmethod
     def validate_file_type(file: UploadFile) -> None:

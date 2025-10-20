@@ -11,16 +11,68 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "Login",
+					"name": "Success Signup",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const jsonData = pm.response.json();",
-									"const accessToken = jsonData.access_token;",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
 									"",
-									"pm.environment.set(\"AUTH_TOKEN\", accessToken);"
+									"pm.test(\"Response access_token validation\", function() {",
+									"    const data = pm.response.json();",
+									"    const accessToken = data.access_token;",
+									"    pm.expect(accessToken).to.not.be.null;",
+									"    pm.environment.set(\"AUTH_TOKEN\", accessToken);",
+									"})",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"function randomCity() {",
+									"    const cities = ['New York', 'Bogotá', 'São Paulo', 'Paris', 'Berlin', 'Tokyo', 'Madrid', 'Toronto'];",
+									"    return cities[Math.floor(Math.random() * cities.length)];",
+									"}",
+									"",
+									"function randomCountry() {",
+									"    const countries = ['USA', 'Colombia', 'Brazil', 'France', 'Germany', 'Japan', 'Spain', 'Canada'];",
+									"    return countries[Math.floor(Math.random() * countries.length)];",
+									"}",
+									"",
+									"const user = {",
+									"    email: randomEmail(),",
+									"    first_name: randomString(5),",
+									"    last_name: randomString(6),",
+									"    city: randomCity(),",
+									"    country: randomCountry()",
+									"};",
+									"",
+									"user.password2 = user.password1;",
+									"",
+									"pm.environment.set('email', user.email);",
+									"pm.environment.set('first_name', user.first_name);",
+									"pm.environment.set('last_name', user.last_name);",
+									"pm.environment.set('password', 'StrongPass123');",
+									"pm.environment.set('city', user.city);",
+									"pm.environment.set('country', user.country);"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -33,7 +85,165 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"StrongPass123\"\n}",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"first_name\": \"{{first_name}}\",\n  \"last_name\": \"{{last_name}}\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"{{city}}\",\n  \"country\": \"{{country}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Success Signup - Another User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response access_token validation\", function() {",
+									"    const data = pm.response.json();",
+									"    const accessToken = data.access_token;",
+									"    pm.expect(accessToken).to.not.be.null;",
+									"    pm.environment.set(\"ANOTHER_AUTH_TOKEN\", accessToken);",
+									"    pm.expect(pm.environment.get('ANOTHER_AUTH_TOKEN')).to.not.eql(pm.environment.get('AUTH_TOKEN'));",
+									"})",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"function randomCity() {",
+									"    const cities = ['New York', 'Bogotá', 'São Paulo', 'Paris', 'Berlin', 'Tokyo', 'Madrid', 'Toronto'];",
+									"    return cities[Math.floor(Math.random() * cities.length)];",
+									"}",
+									"",
+									"function randomCountry() {",
+									"    const countries = ['USA', 'Colombia', 'Brazil', 'France', 'Germany', 'Japan', 'Spain', 'Canada'];",
+									"    return countries[Math.floor(Math.random() * countries.length)];",
+									"}",
+									"",
+									"const user = {",
+									"    email: randomEmail(),",
+									"    first_name: randomString(5),",
+									"    last_name: randomString(6),",
+									"    city: randomCity(),",
+									"    country: randomCountry()",
+									"};",
+									"",
+									"user.password2 = user.password1;",
+									"",
+									"pm.environment.set('email', user.email);",
+									"pm.environment.set('first_name', user.first_name);",
+									"pm.environment.set('last_name', user.last_name);",
+									"pm.environment.set('password', 'StrongPass123');",
+									"pm.environment.set('city', user.city);",
+									"pm.environment.set('country', user.country);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"first_name\": \"{{first_name}}\",\n  \"last_name\": \"{{last_name}}\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"{{city}}\",\n  \"country\": \"{{country}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Sucess Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () { ",
+									"    pm.response.to.have.status(200); ",
+									"});",
+									"",
+									"pm.test(\"Response access_token validation\", function() {",
+									"    const data = pm.response.json();",
+									"    const accessToken = data.access_token;",
+									"    pm.expect(accessToken).to.not.be.null;",
+									"    pm.environment.set(\"AUTH_TOKEN\", accessToken);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -55,16 +265,19 @@
 					"response": []
 				},
 				{
-					"name": "Signup",
+					"name": "Unprocessable Entity Login",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"const jsonData = pm.response.json();",
-									"const accessToken = jsonData.access_token;",
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
 									"",
-									"pm.environment.set(\"AUTH_TOKEN\", accessToken);"
+									"pm.test(\"Invalid email format\", function () {",
+									"    pm.expect(pm.response.json().detail[0].msg).to.include(\"value is not a valid email address\");",
+									"})"
 								],
 								"type": "text/javascript",
 								"packages": {},
@@ -77,7 +290,639 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"stiven@example.com\",\n  \"first_name\": \"Stiven\",\n  \"last_name\": \"Cardona\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Medellin\",\n  \"country\": \"Colombia\"\n}",
+							"raw": "{\n    \"email\": \"no-valid email\",\n    \"password\": \"no-password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/login",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Credentials Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"})",
+									"",
+									"pm.test(\"Invalid email format\", function () {",
+									"    pm.expect(pm.response.json().detail).to.include(\"Invalid credentials\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"no-soy@example.com\",\n    \"password\": \"no-password\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/login",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Duplicate Email Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"})",
+									"",
+									"pm.test(\"Duplicate email error message\", function () {",
+									"    pm.expect(pm.response.json().detail).to.include(\"Email already registered\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"first_name\": \"Duplicate\",\n  \"last_name\": \"User\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Test City\",\n  \"country\": \"Test Country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Password Mismatch Signup",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"pm.environment.set('mismatch_email', randomEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Password mismatch error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const passwordError = response.detail.find(error => error.loc.includes('password2'));",
+									"    pm.expect(passwordError).to.not.be.undefined;",
+									"    pm.expect(passwordError.msg).to.include('Passwords do not match');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{mismatch_email}}\",\n  \"first_name\": \"Password\",\n  \"last_name\": \"Mismatch\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"DifferentPass456\",\n  \"city\": \"Test City\",\n  \"country\": \"Test Country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Weak Password Signup",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"pm.environment.set('weak_email', randomEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Weak password error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const passwordError = response.detail.find(error => error.loc.includes('password1'));",
+									"    pm.expect(passwordError).to.not.be.undefined;",
+									"    pm.expect(passwordError.msg).to.include('Password must be at least 8 characters');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{weak_email}}\",\n  \"first_name\": \"Weak\",\n  \"last_name\": \"Password\",\n  \"password1\": \"weak\",\n  \"password2\": \"weak\",\n  \"city\": \"Test City\",\n  \"country\": \"Test Country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Email Format Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Invalid email format error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const emailError = response.detail.find(error => error.loc.includes('email'));",
+									"    pm.expect(emailError).to.not.be.undefined;",
+									"    pm.expect(emailError.msg).to.include('value is not a valid email address');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"invalid-email-format\",\n  \"first_name\": \"Invalid\",\n  \"last_name\": \"Email\",\n  \"password1\": \"StrongPass123\",\n  \"password2\": \"StrongPass123\",\n  \"city\": \"Test City\",\n  \"country\": \"Test Country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Missing Required Fields Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Missing required fields error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"    ",
+									"    // Check for missing field errors",
+									"    const missingFields = response.detail.filter(error => error.type === 'missing');",
+									"    pm.expect(missingFields.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"incomplete@example.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Password Strength Validation Signup",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"pm.environment.set('strength_email', randomEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Password strength validation\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const passwordError = response.detail.find(error => error.loc.includes('password1'));",
+									"    pm.expect(passwordError).to.not.be.undefined;",
+									"    // Should contain one of the password strength requirements",
+									"    const strengthRequirements = [",
+									"        'Password must be at least 8 characters',",
+									"        'Password must contain at least one uppercase letter',",
+									"        'Password must contain at least one lowercase letter',",
+									"        'Password must contain at least one number'",
+									"    ];",
+									"    const hasStrengthError = strengthRequirements.some(req => passwordError.msg.includes(req));",
+									"    pm.expect(hasStrengthError).to.be.true;",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{strength_email}}\",\n  \"first_name\": \"Password\",\n  \"last_name\": \"Strength\",\n  \"password1\": \"lowercase123\",\n  \"password2\": \"lowercase123\",\n  \"city\": \"Test City\",\n  \"country\": \"Test Country\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Minimal Required Fields Signup",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"pm.environment.set('minimal_email', randomEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"})",
+									"",
+									"pm.test(\"Response structure validation\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data).to.have.property('user');",
+									"    pm.expect(data).to.have.property('access_token');",
+									"    pm.expect(data).to.have.property('token_type');",
+									"    pm.expect(data.token_type).to.eql('bearer');",
+									"})",
+									"",
+									"pm.test(\"User data validation\", function() {",
+									"    const user = pm.response.json().user;",
+									"    pm.expect(user.email).to.eql(pm.environment.get('minimal_email'));",
+									"    pm.expect(user.first_name).to.eql('Minimal');",
+									"    pm.expect(user.last_name).to.eql('User');",
+									"    pm.expect(user.city).to.be.null;",
+									"    pm.expect(user.country).to.be.null;",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{minimal_email}}\",\n  \"first_name\": \"Minimal\",\n  \"last_name\": \"User\",\n  \"password1\": \"MinimalPass123\",\n  \"password2\": \"MinimalPass123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Empty Fields Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Empty fields validation\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    ",
+									"    // Should have multiple validation errors for empty fields",
+									"    const requiredFields = ['email', 'first_name', 'last_name', 'password1', 'password2'];",
+									"    const emptyFieldErrors = response.detail.filter(error => ",
+									"        requiredFields.some(field => error.loc.includes(field))",
+									"    );",
+									"    pm.expect(emptyFieldErrors.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"\",\n  \"first_name\": \"\",\n  \"last_name\": \"\",\n  \"password1\": \"\",\n  \"password2\": \"\",\n  \"city\": \"\",\n  \"country\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/auth/signup",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Special Characters Signup",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"function randomEmail() {",
+									"    return `${randomString(6)}_${Date.now()}@example.com`;",
+									"}",
+									"",
+									"pm.environment.set('special_email', randomEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"})",
+									"",
+									"pm.test(\"Special characters handled correctly\", function() {",
+									"    const data = pm.response.json();",
+									"    const user = data.user;",
+									"    pm.expect(user.first_name).to.eql('José');",
+									"    pm.expect(user.last_name).to.eql('García-López');",
+									"    pm.expect(user.city).to.eql('São Paulo');",
+									"    pm.expect(user.country).to.eql('España');",
+									"})",
+									"",
+									"pm.test(\"Access token generated\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.access_token).to.be.a('string');",
+									"    pm.expect(data.access_token.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{special_email}}\",\n  \"first_name\": \"José\",\n  \"last_name\": \"García-López\",\n  \"password1\": \"Contraseña123!\",\n  \"password2\": \"Contraseña123!\",\n  \"city\": \"São Paulo\",\n  \"country\": \"España\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -102,130 +947,2208 @@
 		},
 		{
 			"name": "Videos",
-			"item": []
-		},
-		{
-			"name": "Votes",
-			"item": []
-		},
-		{
-			"name": "Ranks",
-			"item": []
-		},
-		{
-			"name": "Vote for video",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+			"item": [
+				{
+					"name": "Success Upload video",
+					"event": [
 						{
-							"key": "token",
-							"value": "{{AUTH_TOKEN}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8000/api/public/videos/{video_id}/vote",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"public",
-						"videos",
-						"{video_id}",
-						"vote"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "List ranking",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{AUTH_TOKEN}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8000/api/public/rankings/top?limit=5&page=1&sort_by=votes&sort_order=desc",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"public",
-						"rankings",
-						"top"
-					],
-					"query": [
-						{
-							"key": "limit",
-							"value": "5"
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"pm.environment.set(\"video_title\", `Test Video ${randomString()}`);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
 						},
 						{
-							"key": "page",
-							"value": "1"
-						},
-						{
-							"key": "sort_by",
-							"value": "votes"
-						},
-						{
-							"key": "sort_order",
-							"value": "desc"
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response schema validation\", function() {",
+									"    pm.expect(pm.response.json().message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"    pm.expect(pm.response.json().task_id).to.be.a('string');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
 						}
-					]
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "{{video_title}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Success Upload another video",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"pm.environment.set(\"video_title\", `Test Video ${randomString()}`);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response schema validation\", function() {",
+									"    pm.expect(pm.response.json().message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"    pm.expect(pm.response.json().task_id).to.be.a('string');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ANOTHER_AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "{{video_title}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Missing File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Missing file validation\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const fileError = response.detail.find(error => error.loc.includes('file'));",
+									"    pm.expect(fileError).to.not.be.undefined;",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Video Without File",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Missing Title",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									"",
+									"pm.test(\"Missing title validation\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    const titleError = response.detail.find(error => error.loc.includes('title'));",
+									"    pm.expect(titleError).to.not.be.undefined;",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Empty Title",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422\", function () {",
+									"    pm.response.to.have.status(422);",
+									"})",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Whitespace Only Title",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"})",
+									"",
+									"pm.test(\"Whitespace title error message\", function () {",
+									"    pm.expect(pm.response.json().detail).to.include(\"El título del video no puede estar vacío\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "   \t\n   ",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Invalid File Type",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Create a temporary text file for testing",
+									"const fs = require('fs');",
+									"const path = require('path');",
+									"const tempDir = '/tmp';",
+									"const tempFile = path.join(tempDir, 'test-document.txt');",
+									"",
+									"try {",
+									"    fs.writeFileSync(tempFile, 'This is not a video file');",
+									"    pm.environment.set('temp_text_file', tempFile);",
+									"} catch (error) {",
+									"    console.log('Could not create temp file, test may fail');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"})",
+									"",
+									"pm.test(\"Invalid file type error message\", function () {",
+									"    pm.expect(pm.response.json().detail).to.include(\"Tipo de archivo inválido\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Invalid File Type Test",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "{{temp_text_file}}"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Unauthorized Upload Test",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Special Characters Title",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomString(length = 8) {",
+									"    const chars = 'abcdefghijklmnopqrstuvwxyz';",
+									"    return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');",
+									"}",
+									"",
+									"const specialTitle = `Vídeo con ñ y acentós ${randomString()} @#$%`;",
+									"pm.environment.set('special_video_title', specialTitle);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"})",
+									"",
+									"pm.test(\"Response schema validation\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"    pm.expect(data.task_id).to.be.a('string');",
+									"    pm.expect(data.task_id.length).to.be.greaterThan(0);",
+									"})",
+									"",
+									"pm.test(\"Special characters handled correctly\", function() {",
+									"    // Verify the upload succeeded with special characters",
+									"    const expectedTitle = pm.environment.get('special_video_title');",
+									"    pm.expect(expectedTitle).to.include('ñ');",
+									"    pm.expect(expectedTitle).to.include('ó');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "{{special_video_title}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Long Title",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a very long title (over 200 characters)",
+									"const longTitle = 'Este-titulo-es-muy-largo-que-excede-los-limites-normales-de-caracteres-para-probar-la-validacion-del-sistema'.repeat(3);",
+									"pm.environment.set('long_video_title', longTitle.substring(0, 250));"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully or title validation\", function () {",
+									"    // Could be 200 (success) or 400 (validation error) depending on title length limits",
+									"    pm.expect([200, 400]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Response validation\", function() {",
+									"    const data = pm.response.json();",
+									"    if (pm.response.code === 200) {",
+									"        pm.expect(data.message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"        pm.expect(data.task_id).to.be.a('string');",
+									"    } else if (pm.response.code === 400) {",
+									"        pm.expect(data.detail).to.be.a('string');",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "{{long_video_title}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"})",
+									"",
+									"pm.test(\"Invalid token error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Could not validate credentials\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "invalid.jwt.token.here",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Invalid Token Test",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Duplicate Upload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"})",
+									"",
+									"pm.test(\"Duplicate upload handling\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"    pm.expect(data.task_id).to.be.a('string');",
+									"    // Each upload should get a unique task_id",
+									"    pm.expect(data.task_id).to.not.eql(pm.environment.get('previous_task_id'));",
+									"    pm.environment.set('previous_task_id', data.task_id);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "{{video_title}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Video - Content Type Validation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video uploaded successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"})",
+									"",
+									"pm.test(\"Content type validation\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.message).to.eql(\"Video subido correctamente. Procesamiento en curso.\");",
+									"    pm.expect(data.task_id).to.be.a('string');",
+									"    pm.expect(data.task_id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);",
+									"})",
+									"",
+									"pm.test(\"Task ID is UUID format\", function() {",
+									"    const data = pm.response.json();",
+									"    // UUID v4 format validation",
+									"    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;",
+									"    pm.expect(data.task_id).to.match(uuidRegex);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Content Type Test Video",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/Users/stiven.cardona/Documents/miso/anb-rising-stars-showcase/sample-video.mp4"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/upload",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"upload"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Videos - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function() {",
+									"    const videos = pm.response.json();",
+									"    pm.expect(videos).to.be.an('array');",
+									"})",
+									"",
+									"pm.test(\"Video data structure validation\", function() {",
+									"    const videos = pm.response.json();",
+									"    if (videos.length > 0) {",
+									"        const video = videos[0];",
+									"        pm.expect(video).to.have.property('video_id');",
+									"        pm.expect(video).to.have.property('title');",
+									"        pm.expect(video).to.have.property('status');",
+									"        pm.expect(video).to.have.property('uploaded_at');",
+									"        pm.expect(video).to.have.property('votes');",
+									"        ",
+									"        // Store first video for subsequent tests",
+									"        pm.environment.set('video_id', video.video_id);",
+									"        pm.environment.set('video_title', video.title);",
+									"        pm.environment.set('video_status', video.status);",
+									"        pm.expect(pm.environment.get('video_id2')).to.not.eql(pm.environment.get('video_id'));",
+									"    }",
+									"})",
+									"",
+									"pm.test(\"Video ID format validation\", function() {",
+									"    const videos = pm.response.json();",
+									"    if (videos.length > 0) {",
+									"        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"        pm.expect(videos[0].video_id).to.match(uuidRegex);",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Videos - Success - Another User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array\", function() {",
+									"    const videos = pm.response.json();",
+									"    pm.expect(videos).to.be.an('array');",
+									"})",
+									"",
+									"pm.test(\"Video data structure validation\", function() {",
+									"    const videos = pm.response.json();",
+									"    if (videos.length > 0) {",
+									"        const video = videos[1];",
+									"        pm.expect(video).to.have.property('video_id');",
+									"        pm.expect(video).to.have.property('title');",
+									"        pm.expect(video).to.have.property('status');",
+									"        pm.expect(video).to.have.property('uploaded_at');",
+									"        pm.expect(video).to.have.property('votes');",
+									"        ",
+									"        // Store first video for subsequent tests",
+									"        pm.environment.set('video_id2', video.video_id);",
+									"        pm.expect(pm.environment.get('video_id2')).to.not.eql(pm.environment.get('video_id'));",
+									"    }",
+									"})",
+									"",
+									"pm.test(\"Video ID format validation\", function() {",
+									"    const videos = pm.response.json();",
+									"    if (videos.length > 0) {",
+									"        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"        pm.expect(videos[0].video_id).to.match(uuidRegex);",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ANOTHER_AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Videos - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Videos - Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"})",
+									"",
+									"pm.test(\"Invalid token error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Could not validate credentials\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "invalid.jwt.token.here",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Video Details - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Video data structure validation\", function(){",
+									"    const video = pm.response.json();",
+									"    pm.expect(video).to.have.property('video_id');",
+									"    pm.expect(video).to.have.property('title');",
+									"    pm.expect(video).to.have.property('status');",
+									"    pm.expect(video).to.have.property('uploaded_at');",
+									"    pm.expect(video).to.have.property('votes');",
+									"})",
+									"",
+									"pm.test(\"Video data consistency\", function(){",
+									"    const video = pm.response.json();",
+									"    pm.expect(video.title).to.eql(pm.environment.get('video_title'));",
+									"    pm.expect(video.video_id).to.eql(pm.environment.get('video_id'));",
+									"})",
+									"",
+									"pm.test(\"Video ID format validation\", function(){",
+									"    const video = pm.response.json();",
+									"    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"    pm.expect(video.video_id).to.match(uuidRegex);",
+									"})",
+									"",
+									"pm.test(\"Optional fields handling\", function(){",
+									"    const video = pm.response.json();",
+									"    // processed_at and processed_url may be null for uploaded videos",
+									"    if (video.status === 'processed') {",
+									"        pm.expect(video).to.have.property('processed_at');",
+									"        pm.expect(video).to.have.property('processed_url');",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{video_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Video Details - Not Found",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a random UUID that doesn't exist",
+									"function generateUUID() {",
+									"    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+									"        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+									"        return v.toString(16);",
+									"    });",
+									"}",
+									"",
+									"pm.environment.set('nonexistent_video_id', generateUUID());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"})",
+									"",
+									"pm.test(\"Video not found error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Video not found\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{nonexistent_video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{nonexistent_video_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Video Details - Invalid UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 or 422\", function () {",
+									"    pm.expect([404, 422]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Invalid UUID error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/not-a-valid-uuid",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"not-a-valid-uuid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Video Details - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{video_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video - Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Video deleted successfully\", function () {",
+									"    pm.response.to.have.status(204);",
+									"})",
+									"",
+									"pm.test(\"No content response body\", function () {",
+									"    // 204 No Content should have empty or minimal response body",
+									"    const responseText = pm.response.text();",
+									"    // Response might be empty or contain minimal JSON",
+									"    if (responseText && responseText.length > 0) {",
+									"        try {",
+									"            const data = pm.response.json();",
+									"            if (data.message) {",
+									"                pm.expect(data.message).to.include('eliminado exitosamente');",
+									"            }",
+									"            if (data.video_id) {",
+									"                pm.expect(data.video_id).to.eql(pm.environment.get('video_id'));",
+									"            }",
+									"        } catch (e) {",
+									"            // Empty response is also valid for 204",
+									"        }",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{video_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video - Not Found",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a random UUID that doesn't exist",
+									"function generateUUID() {",
+									"    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+									"        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+									"        return v.toString(16);",
+									"    });",
+									"}",
+									"",
+									"pm.environment.set('delete_nonexistent_id', generateUUID());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"})",
+									"",
+									"pm.test(\"Video not found error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Video not found\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{delete_nonexistent_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{delete_nonexistent_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video - Invalid UUID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404 or 422\", function () {",
+									"    pm.expect([404, 422]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Invalid UUID error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.an('array');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/invalid-uuid-format",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"invalid-uuid-format"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{video_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video - Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"})",
+									"",
+									"pm.test(\"Invalid token error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Could not validate credentials\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "expired.or.invalid.jwt.token",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/videos/{{video_id}}",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"{{video_id}}"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Estadisticas Rankings",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+			"name": "Public",
+			"item": [
+				{
+					"name": "Vote for Video - Invalid Video ID",
+					"event": [
 						{
-							"key": "token",
-							"value": "{{AUTH_TOKEN}}",
-							"type": "string"
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"})",
+									"",
+									"pm.test(\"Invalid video ID error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Invalid video ID format\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
 						}
-					]
-				},
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "http://localhost:8000/api/public/rankings/stats",
-					"protocol": "http",
-					"host": [
-						"localhost"
 					],
-					"port": "8000",
-					"path": [
-						"api",
-						"public",
-						"rankings",
-						"stats"
-					]
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/not-a-valid-uuid/vote",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"not-a-valid-uuid",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote for Video - Nonexistent Video",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a random UUID that doesn't exist",
+									"function generateUUID() {",
+									"    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+									"        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+									"        return v.toString(16);",
+									"    });",
+									"}",
+									"",
+									"pm.environment.set('nonexistent_vote_video_id', generateUUID());"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"})",
+									"",
+									"pm.test(\"Video not found error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Video not found or has been deleted\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/{{nonexistent_vote_video_id}}/vote",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{{nonexistent_vote_video_id}}",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote for Video - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/{{video_id}}/vote",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{{video_id}}",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote for Video - Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401\", function () {",
+									"    pm.response.to.have.status(401);",
+									"})",
+									"",
+									"pm.test(\"Invalid token error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Could not validate credentials\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "invalid.jwt.token.here",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/{{video_id}}/vote",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{{video_id}}",
+								"vote"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote Status - Check Vote Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"})",
+									"",
+									"pm.test(\"Vote status response structure\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data).to.have.property('video_id');",
+									"    pm.expect(data).to.have.property('has_voted');",
+									"    pm.expect(data).to.have.property('user_id');",
+									"})",
+									"",
+									"pm.test(\"Vote status data validation\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.video_id).to.eql(pm.environment.get('video_id'));",
+									"    pm.expect(data.has_voted).to.be.a('boolean');",
+									"    pm.expect(data.user_id).to.be.a('string');",
+									"    ",
+									"    // UUID format validation for user_id",
+									"    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;",
+									"    pm.expect(data.user_id).to.match(uuidRegex);",
+									"})",
+									"",
+									"pm.test(\"Vote status consistency\", function() {",
+									"    const data = pm.response.json();",
+									"    // If we voted in previous test, has_voted should be true",
+									"    if (pm.environment.get('current_vote_count')) {",
+									"        pm.expect(data.has_voted).to.be.true;",
+									"    }",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/{{video_id}}/vote-status",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{{video_id}}",
+								"vote-status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote Status - Unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect([401, 403]).to.include(pm.response.code);",
+									"})",
+									"",
+									"pm.test(\"Authentication error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.be.a('string');",
+									"    pm.expect(response.detail.length).to.be.greaterThan(0);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/{{video_id}}/vote-status",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"{{video_id}}",
+								"vote-status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vote Status - Invalid Video ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"})",
+									"",
+									"pm.test(\"Invalid video ID error\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include(\"Invalid video ID format\");",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos/invalid-uuid-format/vote-status",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos",
+								"invalid-uuid-format",
+								"vote-status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Success Videos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Validate response body is an array\", function () {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{API_HOST}}/api/public/videos",
+							"host": [
+								"{{API_HOST}}"
+							],
+							"path": [
+								"api",
+								"public",
+								"videos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Success Ranking",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"})",
+									"",
+									"pm.test(\"Response schema validation\", function() {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.videos).to.be.an('array');",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{AUTH_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8000/api/public/rankings?limit=5&page=1&sort_by=votes&sort_order=desc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"public",
+								"rankings"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "sort_by",
+									"value": "votes"
+								},
+								{
+									"key": "sort_order",
+									"value": "desc"
+								}
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "API_HOST",
+			"value": ""
 		}
 	]
 }

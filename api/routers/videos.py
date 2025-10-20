@@ -27,7 +27,7 @@ async def upload_video(file: UploadFile, title: str = Form(...), current_user: U
     
     - **Requires video file (mp4, avi, mov, etc.)**
     - **Video must be between 20-60 seconds**
-    - **Title is required and cannot be empty**
+    - **Title is required, cannot be empty, and must be at most 200 characters**
     
     Returns upload confirmation with task ID for tracking
     """
