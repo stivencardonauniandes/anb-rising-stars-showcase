@@ -20,3 +20,12 @@ newman run collections/postman_collection.json -e collections/local.postman_envi
 ```
 
 Este comando ejecutará todos los tests definidos en `collections/postman_collection.json` usando el entorno local especificado en `collections/local.postman_environment.json`. Asegúrate de tener [Newman](https://www.npmjs.com/package/newman) instalado globalmente (`npm install -g newman`) antes de ejecutar el comando.
+
+## Información entrega 1
+
+### Índice
+
+* [Documentación](./docs/Entrega_1.md)
+* [Diagramas complementarios](./docs/C4-Diagrams.md)
+* [Archivos postman](./collections/)
+* [Pruebas de carga](./docs/capscity-planning/)
