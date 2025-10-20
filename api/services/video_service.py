@@ -351,14 +351,6 @@ class VideoService:
         Raises:
             403 HTTPException: If the video does not belong to the user
         """
-        try:
-            ### sanitize video_id
-            video_id = uuid.UUID(video_id)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid video ID format"
-            )
         video = db.query(Video).filter(Video.id == video_id, Video.status != 'deleted').first()
         if video and video.user_id != current_user.id:
             logger.warning(f"Unauthorized access attempt: video_id='{video_id}' by user_id='{current_user.id}'")
@@ -377,14 +369,7 @@ class VideoService:
         Raises:
             HTTPException: If the video does not exist or does not belong to the user
         """
-        try:
-            ### sanitize video_id
-            video_id = uuid.UUID(video_id)
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid video ID format"
-            )
+        
         video = db.query(Video).filter(Video.id == video_id).first()
         if not video:
             logger.warning(f"Video not found for deletion: video_id='{video_id}' by user_id='{current_user.id}'")

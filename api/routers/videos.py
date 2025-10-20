@@ -2,6 +2,7 @@
 Video management endpoints for upload and processing
 """
 import logging
+import uuid
 
 from database import get_db
 from dependencies import get_current_user
@@ -72,6 +73,14 @@ async def get_video_details(video_id: str, current_user: User = Depends(get_curr
     """
     Retrieve details of a specific video by ID for the authenticated user
     """
+    try:
+        ### sanitize video_id
+        video_id = uuid.UUID(video_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid video ID format"
+        )
     logger.info(f"Fetching video details: video_id='{video_id}' for user: user='{current_user.id}'")
     
     video = video_service.get_video_by_id(video_id, current_user, db)
@@ -99,6 +108,14 @@ async def delete_video(video_id: str, current_user: User = Depends(get_current_u
     """
     Delete a specific video by ID for the authenticated user
     """
+    try:
+        ### sanitize video_id
+        video_id = uuid.UUID(video_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid video ID format"
+        )
     logger.info(f"Delete request for video: video_id='{video_id}'")
     
     success = video_service.delete_video(video_id, current_user, db)
