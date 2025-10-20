@@ -6,12 +6,15 @@ está activa.**
 
 ## Estadistica
 
-- Total Request : 181
+- Total Request : 696
 - Average: 1674 MS
-- p95 
-- Min 324 MS
-- Max 2559 MS
+- p95 540
+- Min 134 MS
+- Max 1510 MS
 - Error 0%
+<img width="1291" height="811" alt="Screenshot 2025-10-19 at 10 42 17 PM" src="https://github.com/user-attachments/assets/2b111bd8-17e0-4100-abd1-c30e08d81791" />
+
+  
 
 ### 2. Ramp iniciar en 0 y aumentar hasta X usuarios en 3 minutos; mantener 5 minutos. Repetir con X creciente (p. ej., 100 → 200 → 300) hasta observar degradación.
 
@@ -24,7 +27,9 @@ está activa.**
 - p95 41990
 - Min 356 MS
 - Max 48305 MS
-- Error 77.2%
+- Error 0%
+
+<img width="1333" height="896" alt="Screenshot 2025-10-19 at 10 38 58 PM" src="https://github.com/user-attachments/assets/c62d7e44-dbbc-4f03-b259-6c97f6deb7b5" />
 
 ### Test 200 Usuarios
 - Total Request : 932
@@ -35,6 +40,8 @@ está activa.**
 - Error 0%
 - throughput: 2.6/seg
 
+  <img width="1368" height="859" alt="Screenshot 2025-10-19 at 10 35 19 PM" src="https://github.com/user-attachments/assets/5db94a61-afa9-4316-8f0f-0287ff10196f" />
+
 ### Test 300 Usuarios
 - Total Request : 988
 - Average: 80107 MS
@@ -43,6 +50,12 @@ está activa.**
 - Max 152324 MS
 - Error 0%
 - throughput: 2.5/seg
+
+
+
+
+
+  
 
 ### 3. Ejecutar 5 minutos en el 80% de X (el mejor nivel previo sin degradación) para confirmar estabilidad.
 
