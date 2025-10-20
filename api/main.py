@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from routers import auth, public, videos
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Configure logging first
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +29,8 @@ app = FastAPI(
     description="API for the ANB Rising Stars Showcase application",
     version="1.0.0",
 )
+
+Instrumentator().instrument(app).expose(app)
 
 # Add CORS middleware
 app.add_middleware(
