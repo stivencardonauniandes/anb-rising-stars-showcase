@@ -2,6 +2,7 @@
 Video management endpoints for upload and processing
 """
 import logging
+import uuid
 
 from database import get_db
 from dependencies import get_current_user
@@ -26,7 +27,7 @@ async def upload_video(file: UploadFile, title: str = Form(...), current_user: U
     
     - **Requires video file (mp4, avi, mov, etc.)**
     - **Video must be between 20-60 seconds**
-    - **Title is required and cannot be empty**
+    - **Title is required, cannot be empty, and must be at most 200 characters**
     
     Returns upload confirmation with task ID for tracking
     """
@@ -68,7 +69,7 @@ async def list_user_videos(current_user: User = Depends(get_current_user), db: S
 
 
 @router.get("/{video_id}", response_model=VideoResponse)
-async def get_video_details(video_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_video_details(video_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Retrieve details of a specific video by ID for the authenticated user
     """
@@ -95,7 +96,7 @@ async def get_video_details(video_id: str, current_user: User = Depends(get_curr
     return video_response
 
 @router.delete("/{video_id}", status_code=204)
-async def delete_video(video_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def delete_video(video_id: uuid.UUID, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Delete a specific video by ID for the authenticated user
     """
