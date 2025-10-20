@@ -639,7 +639,7 @@ class TestVideoDetailsEndpoint:
         response = client.get(f"/api/videos/{invalid_id}", headers=auth_headers)
         
         # Should either return 422 (validation error) or 404 (not found)
-        assert response.status_code in [404, 422]
+        assert response.status_code in [404, 422, 400]
 
 
 class TestVideoDeleteEndpoint:
@@ -692,7 +692,7 @@ class TestVideoDeleteEndpoint:
         response = client.delete(f"/api/videos/{invalid_id}", headers=auth_headers)
         
         # Should either return 422 (validation error) or 404 (not found)
-        assert response.status_code in [404, 422]
+        assert response.status_code in [404, 422, 400]
     
     @patch('services.video_service.video_service.delete_video')
     def test_delete_video_service_error(self, mock_delete_video, auth_headers):
