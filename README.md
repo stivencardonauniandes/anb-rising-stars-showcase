@@ -2,10 +2,10 @@
 
 ## Integrantes
 
-- Andres Gomez
-- Stiven Cardona
-- Juan Manuel Dominguez
-- Alejandro Pulido
+- Andres Gomez - ae.gomezh1@uniandes.edu.co
+- Stiven Cardona - s.cardona112345@uniandes.edu.co
+- Juan Manuel Dominguez - jm.dominguez@uniandes.edu.co
+- Alejandro Pulido - d.pulidob@uniandes.edu.co
 
 ## SonarQube Reports
 
