@@ -10,6 +10,7 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase
       - REDIS_URL=redis://redis:6379/0
       - NEXTCLOUD_URL=http://nextcloud
+      - IS_RUNNING_STRESS_TESTING=${IS_RUNNING_STRESS_TESTING:-FALSE}
     volumes:
       - ./api:/app
     depends_on:

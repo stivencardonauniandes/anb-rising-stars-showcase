@@ -28,6 +28,9 @@ class Config:
     
     # Nextcloud Configuration
     NEXTCLOUD_URL: str = os.getenv("NEXTCLOUD_URL", "http://nextcloud")
+    
+    # Performance Testing Configuration
+    IS_RUNNING_STRESS_TESTING: bool = os.getenv("IS_RUNNING_STRESS_TESTING", "FALSE").upper() == "TRUE"
     NEXTCLOUD_USERNAME: str = os.getenv("NEXTCLOUD_USERNAME", "worker")
     NEXTCLOUD_PASSWORD: str = os.getenv("NEXTCLOUD_PASSWORD", "super-secret")
     
