@@ -155,13 +155,6 @@ class VideoService:
             HTTPException: If upload fails
         """
         try:
-            # Check if we're running stress/performance testing
-            if config.IS_RUNNING_STRESS_TESTING:
-                # Return mocked path for performance testing
-                mocked_path = f"/mock/stress-test/{filename}"
-                logger.info(f"[STRESS TEST MODE] Returning mocked Nextcloud path: {mocked_path}")
-                return mocked_path
-            
             # Normal Nextcloud upload logic
             remote_path = f"/raw/{filename}"
             nextcloud_url = config.get_nextcloud_url()
@@ -241,12 +234,6 @@ class VideoService:
             task_id: ID of the video processing task
         """
         try:
-            # Check if we're running stress/performance testing
-            if config.IS_RUNNING_STRESS_TESTING:
-                # Mock Redis stream posting for performance testing
-                logger.info(f"[STRESS TEST MODE] Mocked Redis stream message: task_id='{task_id}', video_id='{video_id}', source_path='{source_path}'")
-                return
-            
             # Normal Redis stream logic
             r = redis.Redis(
                 host="redis",
