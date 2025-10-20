@@ -28,4 +28,4 @@ Este comando ejecutará todos los tests definidos en `collections/postman_collec
 * [Documentación](./docs/Entrega_1.md)
 * [Diagramas complementarios](./docs/C4-Diagrams.md)
 * [Archivos postman](./collections/)
-* [Pruebas de carga](./docs/capscity-planning/)
+* [Pruebas de carga](./capacity-planning/)
