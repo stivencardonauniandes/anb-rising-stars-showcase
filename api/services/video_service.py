@@ -234,13 +234,20 @@ class VideoService:
             task_id: ID of the video processing task
         """
         try:
+
+            # Read Redis connection from environment / .env (defaults kept for local compose)
+            redis_host = os.getenv("REDIS_HOST", "redis")
+            redis_port = int(os.getenv("REDIS_PORT", os.getenv("REDIS_PORT_DEFAULT", "6379")))
+            redis_db = int(os.getenv("REDIS_DB", "0"))
+            redis_password = os.getenv("REDIS_PASSWORD", None)
+
             # Normal Redis stream logic
             r = redis.Redis(
-                host="redis",
-                port="6379",
-                db=0,
-                password=None,
-            )
+                host=redis_host,
+                port=redis_port,
+                db=redis_db,
+                password=redis_password,
+             )
             
             message = {
                 "task_id": task_id,
