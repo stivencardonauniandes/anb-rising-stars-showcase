@@ -11,6 +11,10 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - NEXTCLOUD_URL=http://nextcloud
       - IS_RUNNING_STRESS_TESTING=${IS_RUNNING_STRESS_TESTING:-FALSE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
     volumes:
       - ./api:/app
     depends_on:
