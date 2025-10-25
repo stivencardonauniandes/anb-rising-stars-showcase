@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
+
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
