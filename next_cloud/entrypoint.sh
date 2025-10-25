@@ -25,7 +25,7 @@ su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_dom
 echo "Trusted domains configured. Creating folders..."
 
 # Run the folder creation script
-/next_cloud/setup_nextcloud_folders.sh
+/setup_nextcloud_folders.sh
 
 echo "Folders created successfully."
 
