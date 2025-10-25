@@ -57,9 +57,9 @@ NEXTCLOUD_ADMIN_USER=admin
 NEXTCLOUD_ADMIN_PASSWORD=admin123
 
 # Configuración de dominio (IMPORTANTE para producción)
-NEXTCLOUD_TRUSTED_DOMAINS=localhost your-domain.com your-server-ip
-OVERWRITEHOST=your-domain.com
-OVERWRITEPROTOCOL=https
+NEXTCLOUD_TRUSTED_DOMAINS=localhost 34.229.110.180
+OVERWRITEHOST=34.229.110.180
+OVERWRITEPROTOCOL=http
 
 # Configuración de base de datos (servidor externo)
 POSTGRES_HOST=postgres
@@ -76,8 +76,8 @@ POSTGRES_PASSWORD=postgres
 
 ## 🌐 Acceso
 
-- **Nextcloud**: http://localhost:8080
-- **Adminer**: http://localhost:8081
+- **Nextcloud**: http://34.229.110.180:8080
+- **Adminer**: http://34.229.110.180:8081
 
 ### Credenciales por Defecto
 

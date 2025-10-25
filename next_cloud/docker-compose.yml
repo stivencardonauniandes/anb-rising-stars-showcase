@@ -1,50 +1,147 @@
 version: '3.8'
 
 services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/anb_showcase
+      - REDIS_URL=redis://redis:6379/0
+      - NEXTCLOUD_URL=http://nextcloud
+      - IS_RUNNING_STRESS_TESTING=${IS_RUNNING_STRESS_TESTING:-FALSE}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=
+    volumes:
+      - ./api:/app
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - redisinsight_data:/db
+    networks:
+      - app-network
+
+  worker:
+    build: ./worker
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./worker/configs:/app/configs:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9091:9090"
+    depends_on:
+      - worker
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - app-network
+
   nextcloud:
     image: nextcloud:latest
-    container_name: nextcloud
     ports:
       - "8080:80"
-      - "8443:443"
     volumes:
       - nextcloud_data:/var/www/html
-      - ./data:/var/www/html/data
-      - ./config:/var/www/html/config
-      - ./apps:/var/www/html/custom_apps
-      - ./entrypoint.sh:/entrypoint.sh:ro
-      - ./setup_nextcloud_folders.sh:/setup_nextcloud_folders.sh:ro
+      - ./next_cloud:/next_cloud
     environment:
-      # Configuración básica de Nextcloud
-      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
-      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD:-admin123}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_TRUSTED_DOMAINS:-localhost}
-      
-      # Configuración de base de datos (servidor externo)
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - NEXTCLOUD_ADMIN_USER=worker
+      - NEXTCLOUD_ADMIN_PASSWORD=super-secret
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost nextcloud
+      - POSTGRES_HOST=postgres
       - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      
-      # Configuración adicional
-      - NEXTCLOUD_DATA_DIR=/var/www/html/data
-      - APACHE_DISABLE_REWRITE_IP=1
-      - OVERWRITEHOST=${OVERWRITEHOST:-}
-      - OVERWRITEPROTOCOL=${OVERWRITEPROTOCOL:-http}
-      - OVERWRITEWEBROOT=${OVERWRITEWEBROOT:-/}
-      - OVERWRITECLIENTPROTO=${OVERWRITECLIENTPROTO:-}
-      
-      # Configuración de memoria y rendimiento
-      - PHP_MEMORY_LIMIT=512M
-      - PHP_UPLOAD_LIMIT=10G
-      - PHP_MAX_EXECUTION_TIME=3600
-      
-      # Configuración de seguridad
-      - NEXTCLOUD_UPDATE=1
-      - NEXTCLOUD_BACKUP_KEEP_DAYS=7
-    # depends_on removed - using external PostgreSQL server
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
-    entrypoint: /entrypoint.sh
+    entrypoint: /next_cloud/entrypoint.sh
     command: apache2-foreground
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/status.php"]
@@ -53,49 +150,28 @@ services:
       retries: 5
       start_period: 60s
     networks:
-      - nextcloud-network
-
-  # PostgreSQL service removed - using external PostgreSQL server
-  # Configure connection to external PostgreSQL in environment variables
-
-  redis:
-    image: redis:7-alpine
-    container_name: nextcloud-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+      - app-network
+  
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    depends_on:
+      - api
     volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - nextcloud-network
-
-  # Servicio opcional para administración de base de datos
-  adminer:
-    image: adminer:latest
-    container_name: nextcloud-adminer
-    ports:
-      - "8081:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: ${POSTGRES_HOST:-postgres}
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     restart: unless-stopped
     networks:
-      - nextcloud-network
+      - app-network
 
 volumes:
-  nextcloud_data:
-    driver: local
+  postgres_data:
   redis_data:
-    driver: local
+  redisinsight_data:
+  prometheus_data:
+  grafana_data:
+  nextcloud_data:
 
 networks:
-  nextcloud-network:
+  app-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
