@@ -19,6 +19,7 @@ echo "Nextcloud is ready. Configuring trusted domains..."
 su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 0 --value=localhost"
 su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 1 --value=nextcloud"
 su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=127.0.0.1"
+su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=98.84.32.245"
 su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=api"
 su -s /bin/bash www-data -c "php /var/www/html/occ config:system:set trusted_domains 2 --value=worker"
 
