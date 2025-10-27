@@ -35,3 +35,5 @@ A nivel de código, se generan dockerfiles independientes para cada uno de los s
 * Se corrige el uso de condicionales en los archivos .sh, en lugar de utilizar ```[condicional]``` se utiliza la sintaxis correcta, la cual es ```[[condicional]]```
 
 * Se refactoriza el código en la clase ```video_service.py:VideoService```para evitar la duplicación de código. Para esto se centralizan los mensajes de error en constantes de la clase para no duplicar mensajes en los diferentes métodos.
+
+El PR con las correcciones correspondientes se puede encontrar en https://github.com/stivencardonauniandes/anb-rising-stars-showcase/pull/38/files
