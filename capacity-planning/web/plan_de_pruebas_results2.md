@@ -104,3 +104,15 @@ Prueba fallida
 
 
 
+## CPU AWS
+
+Web Server
+<img width="1645" height="634" alt="image" src="https://github.com/user-attachments/assets/e89bf3be-6e15-4033-aa6e-783c08aa2fe9" />
+
+Next Cloud
+<img width="1670" height="629" alt="image" src="https://github.com/user-attachments/assets/888ea535-0d09-4c63-ace4-8b028c7b7678" />
+
+Se evidencia que durante las pruebas el cuello de botella de procesamiento es el servidor de archivos que demora en recibir los archivos a procesar
+
+
+
