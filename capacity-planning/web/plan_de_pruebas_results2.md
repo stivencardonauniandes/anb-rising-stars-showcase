@@ -80,6 +80,27 @@ p95 > 1 segundo
 
 Prueba fallida  
 
+### 3. Ejecutar 5 minutos en el 80% de X (el mejor nivel previo sin degradación) para confirmar estabilidad.
+
+- Users 200 - Prueba con 160 Users
+- Total Request : 391
+- Ramp up: 60 Segundos
+- Average: 148802 MS
+- p95: 334292
+- Min 316 MS
+- Max 371924 MS
+- Error 61.38%
+- throughput: 40.4/seg
+
+
+Criterios
+
+p95 > 1 segundo
+
+<img width="1366" height="651" alt="image" src="https://github.com/user-attachments/assets/a4fb2240-bea9-4454-be93-b4af2424ce64" />
+
+
+Prueba fallida
 
 
 
