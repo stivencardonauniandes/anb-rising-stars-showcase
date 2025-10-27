@@ -11,12 +11,12 @@ echo "=============================================="
 echo ""
 
 # Configuration
-REDIS_HOST="35.225.59.253"
+REDIS_HOST="54.162.162.14"
 REDIS_PORT="6379"
 
 # Test task configuration (optional - leave empty for auto-generated values)
-VIDEO_ID="097a8d34-aa03-4c47-9846-f71fd7ff13b9"  # e.g., "test-video-12345" or leave empty for random UUID
-SOURCE_PATH="/raw/video_testfe7dbf6e-98f7-44b9-bd71-e1910f922f62.mp4"  # e.g., "test/videos/sample.mp4" or leave empty for auto-generated path
+VIDEO_ID="753f41bb-e995-4236-ad2d-3c06597f976b"  # e.g., "test-video-12345" or leave empty for random UUID
+SOURCE_PATH="/raw/x161d29df1-aef2-45d8-bddc-deff9716e1f1.mp4"  # e.g., "test/videos/sample.mp4" or leave empty for auto-generated path
 
 # Saturation test mode: set to "manual" to use manual stop (press Enter), or "auto" for time/size limits
 SATURATION_MODE="manual"  # Options: "manual" or "auto"
