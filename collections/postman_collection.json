@@ -3085,12 +3085,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8000/api/public/rankings?limit=5&page=1&sort_by=votes&sort_order=desc",
+							"raw": "{{API_HOST}}/api/public/rankings?limit=5&page=1&sort_by=votes&sort_order=desc",
 							"protocol": "http",
 							"host": [
-								"localhost"
+								"{{API_HOST}}"
 							],
-							"port": "8000",
 							"path": [
 								"api",
 								"public",
@@ -3148,7 +3147,7 @@
 	"variable": [
 		{
 			"key": "API_HOST",
-			"value": ""
+			"value": "54.162.162.14:8000"
 		}
 	]
 }
