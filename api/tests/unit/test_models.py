@@ -4,7 +4,7 @@ Tests model creation, validation, relationships, and methods
 """
 import pytest
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -283,11 +283,11 @@ class TestVideoModel:
         assert video.processed_at is None
         
         # Update processed_at
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         video.processed_at = now
         db_session.commit()
         
-        assert video.processed_at == now
+        assert video.processed_at.replace(tzinfo=timezone.utc) == now
 
 
 class TestVoteModel:
@@ -539,7 +539,7 @@ class TestModelIntegration:
         video.status = VideoStatus.processed
         video.votes = 2
         video.processed_url = "https://example.com/processed_lifecycle.mp4"
-        video.processed_at = datetime.utcnow()
+        video.processed_at = datetime.now(timezone.utc)
         
         db_session.commit()
         

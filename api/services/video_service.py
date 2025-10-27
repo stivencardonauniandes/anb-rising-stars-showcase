@@ -27,6 +27,7 @@ class VideoService:
     FILE_PROCESSING_ERROR = "Error al procesar el archivo de video."
     FILE_UPLOAD_SUCCESS = "Video subido correctamente. Procesamiento en curso."
     REDIS_STREAM_NAME = 'video_tasks'
+    FAILED_TO_UPLOAD_VIDEO = "Failed to upload video to storage service."
     
     # Use centralized configuration
     # All configuration now comes from the config module
@@ -139,8 +140,8 @@ class VideoService:
         except Exception as e:
             logger.warning(f"Failed to cleanup temporary file {temp_filepath}: {e}")
     
-    @staticmethod
-    def upload_to_nextcloud(file_data: BinaryIO, filename: str) -> str:
+    @classmethod
+    def upload_to_nextcloud(cls, file_data: BinaryIO, filename: str) -> str:
         """
         Upload video file to Nextcloud storage
         
@@ -180,7 +181,7 @@ class VideoService:
                 )
                 raise HTTPException(
                     status_code=500, 
-                    detail="Failed to upload video to storage service."
+                    detail=cls.FAILED_TO_UPLOAD_VIDEO
                 )
             
             logger.info(f"Video uploaded to Nextcloud: {remote_path}")
@@ -190,13 +191,13 @@ class VideoService:
             logger.error(f"Network error uploading to Nextcloud: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500, 
-                detail="Failed to upload video to storage service."
+                detail=cls.FAILED_TO_UPLOAD_VIDEO
             )
         except Exception as e:
             logger.error(f"Unexpected error uploading to Nextcloud: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500, 
-                detail="Failed to upload video to storage service."
+                detail=cls.FAILED_TO_UPLOAD_VIDEO
             )
     
     @staticmethod

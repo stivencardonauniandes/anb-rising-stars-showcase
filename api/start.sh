@@ -21,7 +21,7 @@ echo "🔄 Running database migrations..."
 alembic upgrade head
 
 # Check if migrations were successful
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
     echo "✅ Migrations completed successfully!"
 else
     echo "❌ Migration failed!"
