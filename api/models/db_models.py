@@ -5,6 +5,7 @@ import uuid
 import enum
 from database import Base
 from database_types import UUID
+from datetime import datetime, timezone
 
 class VideoStatus(enum.Enum):
     uploaded = "uploaded"
@@ -39,7 +40,7 @@ class Video(Base):
     processed_video_id = Column(UUID(), nullable=True)
     title = Column(String(200), nullable=False)
     status = Column(SQLEnum(VideoStatus), nullable=False, default=VideoStatus.uploaded)
-    uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
+    uploaded_at = Column(DateTime(timezone=True), server_default=func.now(), default=lambda: datetime.now(timezone.utc))
     processed_at = Column(DateTime(timezone=True), nullable=True)
     original_url = Column(String(500), nullable=False)
     processed_url = Column(String(500), nullable=True)

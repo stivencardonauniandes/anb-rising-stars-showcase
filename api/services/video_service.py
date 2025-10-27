@@ -140,6 +140,7 @@ class VideoService:
         except Exception as e:
             logger.warning(f"Failed to cleanup temporary file {temp_filepath}: {e}")
     
+    @classmethod
     def upload_to_nextcloud(cls, file_data: BinaryIO, filename: str) -> str:
         """
         Upload video file to Nextcloud storage

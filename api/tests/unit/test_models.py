@@ -287,7 +287,7 @@ class TestVideoModel:
         video.processed_at = now
         db_session.commit()
         
-        assert video.processed_at == now
+        assert video.processed_at.replace(tzinfo=timezone.utc) == now
 
 
 class TestVoteModel:

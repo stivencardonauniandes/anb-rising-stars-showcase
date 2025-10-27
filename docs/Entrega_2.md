@@ -30,3 +30,8 @@ A nivel de código, se generan dockerfiles independientes para cada uno de los s
 
 ## Correcciones de SonarQube realizadas
 
+* Se corrige un issue relacionado con el uso del método ```datetime.utcnow()``` pues este es un método deprecado y su uso no es recomendado en su lugar se utiliza el método ```datetime.now(timezone.utc)``` que es un método que permite la conversión entre timezones.
+
+* Se corrige el uso de condicionales en los archivos .sh, en lugar de utilizar ```[condicional]``` se utiliza la sintaxis correcta, la cual es ```[[condicional]]```
+
+* Se refactoriza el código en la clase ```video_service.py:VideoService```para evitar la duplicación de código. Para esto se centralizan los mensajes de error en constantes de la clase para no duplicar mensajes en los diferentes métodos.
