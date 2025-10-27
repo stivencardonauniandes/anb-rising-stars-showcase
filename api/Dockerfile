@@ -7,14 +7,8 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    DATABASE_URL=postgresql://postgres:postgres@10.0.139.51:5432/anb_showcase \
-    REDIS_URL=redis://54.237.229.253:6379/0 \
-    NEXTCLOUD_URL=http://3.90.52.76:8080 \
-    REDIS_HOST=54.237.229.253 \
-    REDIS_PORT=6379 \
-    REDIS_DB=0 \
-    REDIS_PASSWORD=
+    PYTHONPATH=/app
+
 
 
 # Install system dependencies
