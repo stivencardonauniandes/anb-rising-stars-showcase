@@ -4,7 +4,11 @@ FROM nextcloud:latest
 # Set environment variables
 ENV NEXTCLOUD_ADMIN_USER=worker \
     NEXTCLOUD_ADMIN_PASSWORD=super-secret \
-    NEXTCLOUD_TRUSTED_DOMAINS=
+    NEXTCLOUD_TRUSTED_DOMAINS="localhost 10.0.5.46 3.90.52.76 98.98.186.148 54.237.229.253 10.0.7.94" \
+    POSTGRES_HOST=10.0.139.51 \
+    POSTGRES_DB=nextcloud \
+    POSTGRES_USER=postgres \
+    POSTGRES_PASSWORD=postgres
 
 # Expose the HTTP port
 EXPOSE 80
