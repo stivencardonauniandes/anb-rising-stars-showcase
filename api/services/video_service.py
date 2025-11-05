@@ -4,6 +4,7 @@ Video service for handling video upload, validation, and processing
 import logging
 import os
 import shutil
+import boto3
 import redis
 import requests
 import uuid
@@ -139,6 +140,24 @@ class VideoService:
                 logger.info(f"Temporary file cleaned up: {temp_filepath}")
         except Exception as e:
             logger.warning(f"Failed to cleanup temporary file {temp_filepath}: {e}")
+
+    @staticmethod
+    def upload_to_s3(file_data: BinaryIO, filename: str) -> str:
+        """
+        Upload video file to S3 storage
+        
+        Args:
+            file_data: Binary file data to upload
+            filename: Name for the file in storage
+        """
+        try:
+            # Normal S3 upload logic
+            s3_client = boto3.client('s3')
+            s3_client.upload_fileobj(file_data, config.S3_BUCKET_NAME, filename)
+            return f"/raw/{filename}"
+        except Exception as e:
+            logger.error(f"Error uploading to S3: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
     
     @classmethod
     def upload_to_nextcloud(cls, file_data: BinaryIO, filename: str) -> str:
@@ -302,7 +321,7 @@ class VideoService:
             
             # Upload to Nextcloud
             with open(temp_filepath, "rb") as video_file:
-                remote_path = cls.upload_to_nextcloud(video_file, upload_filename)
+                remote_path = cls.upload_to_s3(video_file, upload_filename)
             
             # Create db record
             record_id = cls.create_db_record(
