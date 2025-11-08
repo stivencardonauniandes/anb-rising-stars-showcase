@@ -25,13 +25,26 @@ type Config struct {
 	WorkerPoolSize     int
 	ProcessingTimeout  time.Duration
 	PostgresDSN        string
-	NextcloudURL       string
-	NextcloudRoot      string
-	NextcloudUsername  string
-	NextcloudPassword  string
-	ProcessedBaseURL   string
-	MetricsAddr        string
-	ShutdownGrace      time.Duration
+
+	// Storage backend selection
+	StorageBackend string // "nextcloud" or "s3"
+
+	// NextCloud configuration
+	NextcloudURL      string
+	NextcloudRoot     string
+	NextcloudUsername string
+	NextcloudPassword string
+
+	// S3 configuration
+	S3Region    string
+	S3Bucket    string
+	S3AccessKey string
+	S3SecretKey string
+	S3Endpoint  string
+
+	ProcessedBaseURL string
+	MetricsAddr      string
+	ShutdownGrace    time.Duration
 }
 
 func Load(envPaths ...string) (*Config, error) {
@@ -60,25 +73,48 @@ func Load(envPaths ...string) (*Config, error) {
 		WorkerPoolSize:     getIntEnv("WORKER_POOL_SIZE", 4),
 		ProcessingTimeout:  getDurationEnv("PROCESSING_TIMEOUT", 5*time.Minute),
 		PostgresDSN:        os.Getenv("POSTGRES_DSN"),
-		NextcloudURL:       os.Getenv("NEXTCLOUD_URL"),
-		NextcloudRoot:      getEnv("NEXTCLOUD_ROOT", "/remote.php/dav/files"),
-		NextcloudUsername:  os.Getenv("NEXTCLOUD_USERNAME"),
-		NextcloudPassword:  os.Getenv("NEXTCLOUD_PASSWORD"),
-		ProcessedBaseURL:   getEnv("PROCESSED_BASE_URL", "/processed/"),
-		MetricsAddr:        getEnv("METRICS_ADDR", ":9090"),
-		ShutdownGrace:      getDurationEnv("SHUTDOWN_GRACE", 30*time.Second),
+
+		// Storage backend selection
+		StorageBackend: getEnv("STORAGE_BACKEND", "s3"),
+
+		// NextCloud configuration
+		NextcloudURL:      os.Getenv("NEXTCLOUD_URL"),
+		NextcloudRoot:     getEnv("NEXTCLOUD_ROOT", "/remote.php/dav/files"),
+		NextcloudUsername: os.Getenv("NEXTCLOUD_USERNAME"),
+		NextcloudPassword: os.Getenv("NEXTCLOUD_PASSWORD"),
+
+		// S3 configuration
+		S3Region:    getEnv("S3_REGION", "us-east-1"),
+		S3Bucket:    os.Getenv("S3_BUCKET"),
+		S3AccessKey: os.Getenv("S3_ACCESS_KEY"),
+		S3SecretKey: os.Getenv("S3_SECRET_KEY"),
+		S3Endpoint:  os.Getenv("S3_ENDPOINT"),
+
+		ProcessedBaseURL: getEnv("PROCESSED_BASE_URL", "/processed/"),
+		MetricsAddr:      getEnv("METRICS_ADDR", ":9090"),
+		ShutdownGrace:    getDurationEnv("SHUTDOWN_GRACE", 30*time.Second),
 	}
 
 	if cfg.PostgresDSN == "" {
 		return nil, fmt.Errorf("POSTGRES_DSN is required")
 	}
 
-	if cfg.NextcloudURL == "" {
-		return nil, fmt.Errorf("NEXTCLOUD_URL is required")
-	}
-
-	if cfg.NextcloudUsername == "" || cfg.NextcloudPassword == "" {
-		return nil, fmt.Errorf("NEXTCLOUD credentials are required")
+	// Validate storage backend configuration
+	switch cfg.StorageBackend {
+	case "nextcloud":
+		if cfg.NextcloudURL == "" {
+			return nil, fmt.Errorf("NEXTCLOUD_URL is required when STORAGE_BACKEND=nextcloud")
+		}
+		if cfg.NextcloudUsername == "" || cfg.NextcloudPassword == "" {
+			return nil, fmt.Errorf("NEXTCLOUD credentials are required when STORAGE_BACKEND=nextcloud")
+		}
+	case "s3":
+		if cfg.S3Bucket == "" {
+			return nil, fmt.Errorf("S3_BUCKET is required when STORAGE_BACKEND=s3")
+		}
+		// S3 access key and secret key are optional (can use IAM roles or env vars)
+	default:
+		return nil, fmt.Errorf("STORAGE_BACKEND must be 'nextcloud' or 's3', got: %s", cfg.StorageBackend)
 	}
 
 	return cfg, nil

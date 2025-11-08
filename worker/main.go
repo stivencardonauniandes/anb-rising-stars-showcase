@@ -24,6 +24,8 @@ import (
 	nextcloudadapter "github.com/alejandro/video-worker/internal/adapters/nextcloud"
 	postgresadapter "github.com/alejandro/video-worker/internal/adapters/postgres"
 	redisadapter "github.com/alejandro/video-worker/internal/adapters/redis"
+	s3adapter "github.com/alejandro/video-worker/internal/adapters/s3"
+	"github.com/alejandro/video-worker/internal/core/ports"
 	"github.com/alejandro/video-worker/internal/core/usecase"
 )
 
@@ -119,9 +121,43 @@ func Run(ctx context.Context) error {
 		}
 	}()
 
-	storage, err := nextcloudadapter.NewWebDAVStorage(cfg.NextcloudURL, cfg.NextcloudRoot, cfg.NextcloudUsername, cfg.NextcloudPassword, logger)
-	if err != nil {
-		return fmt.Errorf("init nextcloud storage: %w", err)
+	// Initialize storage based on configured backend
+	var storage ports.Storage
+	switch cfg.StorageBackend {
+	case "nextcloud":
+		storage, err = nextcloudadapter.NewWebDAVStorage(
+			cfg.NextcloudURL,
+			cfg.NextcloudRoot,
+			cfg.NextcloudUsername,
+			cfg.NextcloudPassword,
+			logger,
+		)
+		if err != nil {
+			return fmt.Errorf("init nextcloud storage: %w", err)
+		}
+		logger.Info("using NextCloud storage backend",
+			zap.String("url", cfg.NextcloudURL),
+			zap.String("root", cfg.NextcloudRoot))
+	case "s3":
+		storage, err = s3adapter.NewS3Storage(
+			cfg.S3Region,
+			cfg.S3Bucket,
+			cfg.ProcessedBaseURL,
+			cfg.S3AccessKey,
+			cfg.S3SecretKey,
+			cfg.S3Endpoint,
+			logger,
+		)
+		if err != nil {
+			return fmt.Errorf("init s3 storage: %w", err)
+		}
+		logger.Info("using S3 storage backend",
+			zap.String("region", cfg.S3Region),
+			zap.String("bucket", cfg.S3Bucket),
+			zap.String("prefix", cfg.ProcessedBaseURL),
+			zap.String("endpoint", cfg.S3Endpoint))
+	default:
+		return fmt.Errorf("unsupported storage backend: %s", cfg.StorageBackend)
 	}
 
 	repository := postgresadapter.NewVideoRepository(db, logger)
