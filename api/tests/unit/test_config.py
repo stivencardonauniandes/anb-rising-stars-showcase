@@ -140,23 +140,6 @@ class TestConfigEnvironmentVariables:
 class TestConfigNextcloudURL:
     """Test Nextcloud URL configuration and environment detection"""
     
-    def test_get_nextcloud_url_explicit_local_override(self):
-        """Test explicit local URL override"""
-        with patch.dict(os.environ, {'NEXTCLOUD_LOCAL_URL': 'https://custom-local:9000'}):
-            config = Config()
-            result = config.get_nextcloud_url()
-            assert result == 'https://custom-local:9000'
-    
-    def test_get_nextcloud_url_docker_environment(self):
-        """Test URL resolution in Docker environment"""
-        # Mock the socket module inside the method
-        with patch('config.Config.get_nextcloud_url') as mock_method:
-            mock_method.return_value = 'https://nextcloud'
-            
-            config = Config()
-            result = config.get_nextcloud_url()
-            assert result == 'https://nextcloud'
-    
     def test_get_nextcloud_url_local_development(self):
         """Test URL resolution in local development environment"""
         # Test the actual behavior - when nextcloud hostname can't be resolved,

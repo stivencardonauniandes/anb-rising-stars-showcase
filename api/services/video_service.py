@@ -4,6 +4,7 @@ Video service for handling video upload, validation, and processing
 import logging
 import os
 import shutil
+import boto3
 import redis
 import requests
 import uuid
@@ -139,66 +140,24 @@ class VideoService:
                 logger.info(f"Temporary file cleaned up: {temp_filepath}")
         except Exception as e:
             logger.warning(f"Failed to cleanup temporary file {temp_filepath}: {e}")
-    
-    @classmethod
-    def upload_to_nextcloud(cls, file_data: BinaryIO, filename: str) -> str:
+
+    @staticmethod
+    def upload_to_s3(file_data: BinaryIO, filename: str) -> str:
         """
-        Upload video file to Nextcloud storage
+        Upload video file to S3 storage
         
         Args:
             file_data: Binary file data to upload
             filename: Name for the file in storage
-            
-        Returns:
-            str: Remote path of uploaded file
-            
-        Raises:
-            HTTPException: If upload fails
         """
         try:
-            # Normal Nextcloud upload logic
-            remote_path = f"/raw/{filename}"
-            nextcloud_url = config.get_nextcloud_url()
-            remote_path_url = (
-                f"{nextcloud_url}/remote.php/dav/files/"
-                f"{config.NEXTCLOUD_USERNAME}{remote_path}"
-            )
-            
-            logger.info(f"Using Nextcloud URL: {nextcloud_url}")
-            logger.info(f"Upload URL: {remote_path_url}")
-            
-            response = requests.put(
-                remote_path_url,
-                data=file_data,
-                auth=(config.NEXTCLOUD_USERNAME, config.NEXTCLOUD_PASSWORD),
-                timeout=config.VIDEO_UPLOAD_TIMEOUT
-            )
-            
-            if response.status_code not in [200, 201, 204]:
-                logger.error(
-                    f"Failed to upload video to Nextcloud: "
-                    f"{response.status_code} - {response.text}"
-                )
-                raise HTTPException(
-                    status_code=500, 
-                    detail=cls.FAILED_TO_UPLOAD_VIDEO
-                )
-            
-            logger.info(f"Video uploaded to Nextcloud: {remote_path}")
-            return remote_path
-            
-        except requests.RequestException as e:
-            logger.error(f"Network error uploading to Nextcloud: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, 
-                detail=cls.FAILED_TO_UPLOAD_VIDEO
-            )
+            # Normal S3 upload logic
+            s3_client = boto3.client('s3')
+            s3_client.upload_fileobj(file_data, config.S3_BUCKET_NAME, f"raw/{filename}")
+            return f"raw/{filename}"
         except Exception as e:
-            logger.error(f"Unexpected error uploading to Nextcloud: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, 
-                detail=cls.FAILED_TO_UPLOAD_VIDEO
-            )
+            logger.error(f"Error uploading to S3: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
     
     @staticmethod
     def create_db_record(user_id: uuid, raw_video_id: uuid, title:str, original_url: str, db:Session) -> None:
@@ -302,7 +261,7 @@ class VideoService:
             
             # Upload to Nextcloud
             with open(temp_filepath, "rb") as video_file:
-                remote_path = cls.upload_to_nextcloud(video_file, upload_filename)
+                remote_path = cls.upload_to_s3(video_file, upload_filename)
             
             # Create db record
             record_id = cls.create_db_record(
