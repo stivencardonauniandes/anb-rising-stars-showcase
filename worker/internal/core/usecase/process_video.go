@@ -120,7 +120,7 @@ func (u *ProcessVideoUseCase) HandleNext(ctx context.Context, workerID string) e
 
 	// Generate processed video ID and construct output path
 	processedVideoID := uuid.New().String()
-	outputPath := u.processedBaseURL + processedVideoID + ".mp4"
+	outputPath := processedVideoID + ".mp4"
 
 	err = u.uploadProcessedVideo(processCtx, outputPath, videoProcessedReader)
 	if err != nil {

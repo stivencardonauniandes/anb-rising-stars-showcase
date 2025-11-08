@@ -90,7 +90,7 @@ func Load(envPaths ...string) (*Config, error) {
 		S3SecretKey: os.Getenv("S3_SECRET_KEY"),
 		S3Endpoint:  os.Getenv("S3_ENDPOINT"),
 
-		ProcessedBaseURL: getEnv("PROCESSED_BASE_URL", "/processed/"),
+		ProcessedBaseURL: getEnv("PROCESSED_BASE_URL", "processed/"),
 		MetricsAddr:      getEnv("METRICS_ADDR", ":9090"),
 		ShutdownGrace:    getDurationEnv("SHUTDOWN_GRACE", 30*time.Second),
 	}
