@@ -153,71 +153,11 @@ class VideoService:
         try:
             # Normal S3 upload logic
             s3_client = boto3.client('s3')
-            s3_client.upload_fileobj(file_data, config.S3_BUCKET_NAME, filename)
-            return f"/raw/{filename}"
+            s3_client.upload_fileobj(file_data, config.S3_BUCKET_NAME, f"raw/{filename}")
+            return f"{config.S3_BUCKET_NAME}/raw/{filename}"
         except Exception as e:
             logger.error(f"Error uploading to S3: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
-    
-    @classmethod
-    def upload_to_nextcloud(cls, file_data: BinaryIO, filename: str) -> str:
-        """
-        Upload video file to Nextcloud storage
-        
-        Args:
-            file_data: Binary file data to upload
-            filename: Name for the file in storage
-            
-        Returns:
-            str: Remote path of uploaded file
-            
-        Raises:
-            HTTPException: If upload fails
-        """
-        try:
-            # Normal Nextcloud upload logic
-            remote_path = f"/raw/{filename}"
-            nextcloud_url = config.get_nextcloud_url()
-            remote_path_url = (
-                f"{nextcloud_url}/remote.php/dav/files/"
-                f"{config.NEXTCLOUD_USERNAME}{remote_path}"
-            )
-            
-            logger.info(f"Using Nextcloud URL: {nextcloud_url}")
-            logger.info(f"Upload URL: {remote_path_url}")
-            
-            response = requests.put(
-                remote_path_url,
-                data=file_data,
-                auth=(config.NEXTCLOUD_USERNAME, config.NEXTCLOUD_PASSWORD),
-                timeout=config.VIDEO_UPLOAD_TIMEOUT
-            )
-            
-            if response.status_code not in [200, 201, 204]:
-                logger.error(
-                    f"Failed to upload video to Nextcloud: "
-                    f"{response.status_code} - {response.text}"
-                )
-                raise HTTPException(
-                    status_code=500, 
-                    detail=cls.FAILED_TO_UPLOAD_VIDEO
-                )
-            
-            logger.info(f"Video uploaded to Nextcloud: {remote_path}")
-            return remote_path
-            
-        except requests.RequestException as e:
-            logger.error(f"Network error uploading to Nextcloud: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, 
-                detail=cls.FAILED_TO_UPLOAD_VIDEO
-            )
-        except Exception as e:
-            logger.error(f"Unexpected error uploading to Nextcloud: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=500, 
-                detail=cls.FAILED_TO_UPLOAD_VIDEO
-            )
     
     @staticmethod
     def create_db_record(user_id: uuid, raw_video_id: uuid, title:str, original_url: str, db:Session) -> None:

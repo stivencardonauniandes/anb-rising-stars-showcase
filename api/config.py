@@ -29,9 +29,6 @@ class Config:
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
     
-    # Nextcloud Configuration
-    NEXTCLOUD_URL: str = os.getenv("NEXTCLOUD_URL", "http://nextcloud")
-    
     # Performance Testing Configuration
     IS_RUNNING_STRESS_TESTING: bool = os.getenv("IS_RUNNING_STRESS_TESTING", "FALSE").upper() == "TRUE"
     NEXTCLOUD_USERNAME: str = os.getenv("NEXTCLOUD_USERNAME", "worker")
@@ -46,31 +43,6 @@ class Config:
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
-    @classmethod
-    def get_nextcloud_url(cls) -> str:
-        """
-        Get the appropriate Nextcloud URL based on the environment
-        Handles Docker vs local development automatically
-        """
-        base_url = cls.NEXTCLOUD_URL
-        
-        # Check for explicit local development URL override
-        local_url = os.getenv("NEXTCLOUD_LOCAL_URL")
-        if local_url:
-            return local_url
-        
-        # Auto-detect environment if using default Docker service name
-        if base_url == "http://nextcloud":
-            try:
-                import socket
-                socket.gethostbyname("nextcloud")
-                # Can resolve 'nextcloud', likely in Docker network
-                return base_url
-            except (socket.gaierror, OSError):
-                # Can't resolve 'nextcloud' or network error, likely local development
-                return "http://localhost:8080"
-        
-        return base_url
     
     @classmethod
     def is_development(cls) -> bool:
