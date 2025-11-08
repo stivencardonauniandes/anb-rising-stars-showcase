@@ -17,6 +17,9 @@ class Config:
     
     # Database Configuration
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/anb_showcase")
+
+    # S3 Configuration
+    S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "anb-rising-stars")
     
     # Redis Configuration
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
