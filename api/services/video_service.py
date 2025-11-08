@@ -154,7 +154,7 @@ class VideoService:
             # Normal S3 upload logic
             s3_client = boto3.client('s3')
             s3_client.upload_fileobj(file_data, config.S3_BUCKET_NAME, f"raw/{filename}")
-            return f"{config.S3_BUCKET_NAME}/raw/{filename}"
+            return f"raw/{filename}"
         except Exception as e:
             logger.error(f"Error uploading to S3: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
