@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -82,7 +83,7 @@ func NewS3Storage(region, bucket, prefix, accessKey, secretKey, endpoint string,
 }
 
 func (s *S3Storage) Download(ctx context.Context, remotePath string) (io.ReadCloser, error) {
-	key := remotePath
+	key := strings.Join(strings.Split(remotePath, "/")[1:], "/")
 	s.logger.Debug("downloading from S3",
 		zap.String("bucket", s.bucket),
 		zap.String("key", key))
