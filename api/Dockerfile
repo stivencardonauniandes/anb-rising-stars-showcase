@@ -8,7 +8,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
-    DATABASE_URL=postgres://postgres:postgres@10.0.139.51:5432/anb_showcase?sslmode=disable
+    DATABASE_URL=postgres://postgres:postgres@10.0.139.51:5432/anb_showcase
     REDIS_URL=redis://10.0.0.89:6379/0
     REDIS_HOST=10.0.0.89
     REDIS_PORT=6379
