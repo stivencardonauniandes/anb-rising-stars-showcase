@@ -31,4 +31,4 @@ fi
 # Start the application with workers for better concurrency
 echo "🚀 Starting API server with workers..."
 # Use 4 workers for better concurrency (adjust based on CPU cores)
-exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers 6
