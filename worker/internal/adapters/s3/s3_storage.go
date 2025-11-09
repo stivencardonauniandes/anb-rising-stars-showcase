@@ -3,7 +3,7 @@ package s3
 import (
 	"context"
 	"io"
-
+	"strings"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
