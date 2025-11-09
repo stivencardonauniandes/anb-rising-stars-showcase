@@ -110,7 +110,8 @@ func (s *S3Storage) Download(ctx context.Context, remotePath string) (io.ReadClo
 }
 
 func (s *S3Storage) Upload(ctx context.Context, remotePath string, data io.Reader) error {
-	key := s.prefix + "/" + remotePath
+	key = strings.ReplaceAll(s.prefix + "/" + remotePath, "//", "/")
+
 	s.logger.Info("uploading to S3",
 		zap.String("bucket", s.bucket),
 		zap.String("key", key),
