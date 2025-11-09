@@ -236,3 +236,5 @@ nextcloud/custom_apps/
 
 # Redis dumps
 dump.rdb
+
+node_modules/

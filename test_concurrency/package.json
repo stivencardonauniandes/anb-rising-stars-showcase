@@ -1,0 +1,28 @@
+{
+  "name": "concurrency-test",
+  "version": "1.0.0",
+  "description": "Concurrency test for video upload endpoint",
+  "main": "index.js",
+  "scripts": {
+    "test": "node smoke_test.js",
+    "smoke": "node smoke_test.js",
+    "ramp:100": "node ramp_100_users.js",
+    "ramp:200": "node ramp_200_users.js",
+    "ramp:300": "node ramp_300_users.js",
+    "ramp:500": "node ramp_500_users.js",
+    "ramp:progressive": "node ramp_progressive.js",
+    "ramp:custom": "node ramp_test.js"
+  },
+  "keywords": [
+    "concurrency",
+    "test",
+    "load-testing"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "form-data": "^4.0.0"
+  }
+}
+

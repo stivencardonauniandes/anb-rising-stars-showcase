@@ -22,7 +22,8 @@ from config import config
 logger = logging.getLogger(__name__)
 
 # Thread pool executor for CPU-intensive tasks
-executor = ThreadPoolExecutor(max_workers=4)
+# Increased workers for better concurrency with file I/O
+executor = ThreadPoolExecutor(max_workers=8)
 
 class VideoService:
     # Constants
@@ -124,9 +125,9 @@ class VideoService:
         )
     
     @staticmethod
-    def save_temp_file(file: UploadFile) -> str:
+    def _save_temp_file_sync(file: UploadFile) -> str:
         """
-        Save uploaded file to temporary location
+        Synchronous file save (runs in thread pool)
         
         Args:
             file: Uploaded file to save
@@ -151,6 +152,27 @@ class VideoService:
         except Exception as e:
             logger.error(f"Error saving temporary file: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=VideoService.FILE_PROCESSING_ERROR)
+    
+    @staticmethod
+    async def save_temp_file(file: UploadFile) -> str:
+        """
+        Save uploaded file to temporary location (async version)
+        
+        Args:
+            file: Uploaded file to save
+            
+        Returns:
+            str: Path to temporary file
+            
+        Raises:
+            HTTPException: If file cannot be saved
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            executor,
+            VideoService._save_temp_file_sync,
+            file
+        )
     
     @staticmethod
     def cleanup_temp_file(temp_filepath: str) -> None:
@@ -286,8 +308,8 @@ class VideoService:
         cleaned_title = cls.validate_title(title)
         cls.validate_file_type(file)
         
-        # Save temporary file
-        temp_filepath = cls.save_temp_file(file)
+        # Save temporary file (async - doesn't block)
+        temp_filepath = await cls.save_temp_file(file)
         
         try:
             # Generate task ID for tracking (in a real system, this would be from a job queue)
