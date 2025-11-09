@@ -33,8 +33,8 @@ async def upload_video(file: UploadFile, title: str = Form(...), current_user: U
     """
     logger.info(f"Video upload request received: title='{title}', filename='{file.filename}'")
     
-    # Delegate all business logic to the service
-    result = video_service.process_video_upload(file, title, current_user, db)
+    # Delegate all business logic to the service (async)
+    result = await video_service.process_video_upload(file, title, current_user, db)
     
     logger.info(f"Video upload completed: task_id='{result.task_id}'")
     return result

@@ -8,6 +8,8 @@ import boto3
 import redis
 import requests
 import uuid
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from typing import BinaryIO, Dict
 from models.db_models import User, Video
 from fastapi import HTTPException, UploadFile
@@ -18,6 +20,9 @@ from schemas.pydantic_schemas import VideoUploadResponse
 from config import config
 
 logger = logging.getLogger(__name__)
+
+# Thread pool executor for CPU-intensive tasks
+executor = ThreadPoolExecutor(max_workers=4)
 
 class VideoService:
     # Constants
@@ -69,9 +74,9 @@ class VideoService:
             raise HTTPException(status_code=400, detail=VideoService.INVALID_FILE_TYPE)
     
     @staticmethod
-    def validate_video_properties(temp_filepath: str) -> Dict[str, float]:
+    def _validate_video_properties_sync(temp_filepath: str) -> Dict[str, float]:
         """
-        Validate video duration and other properties
+        Synchronous video validation (runs in thread pool)
         
         Args:
             temp_filepath: Path to temporary video file
@@ -96,6 +101,27 @@ class VideoService:
         except (ValueError, BufferError, RuntimeError) as e:
             logger.error(f"Error validating video properties: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=VideoService.FILE_PROCESSING_ERROR)
+    
+    @staticmethod
+    async def validate_video_properties(temp_filepath: str) -> Dict[str, float]:
+        """
+        Validate video duration and other properties (async version)
+        
+        Args:
+            temp_filepath: Path to temporary video file
+            
+        Returns:
+            Dict with video properties (duration, etc.)
+            
+        Raises:
+            HTTPException: If video properties are invalid
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            executor,
+            VideoService._validate_video_properties_sync,
+            temp_filepath
+        )
     
     @staticmethod
     def save_temp_file(file: UploadFile) -> str:
@@ -142,9 +168,9 @@ class VideoService:
             logger.warning(f"Failed to cleanup temporary file {temp_filepath}: {e}")
 
     @staticmethod
-    def upload_to_s3(file_data: BinaryIO, filename: str) -> str:
+    def _upload_to_s3_sync(file_data: BinaryIO, filename: str) -> str:
         """
-        Upload video file to S3 storage
+        Synchronous S3 upload (runs in thread pool)
         
         Args:
             file_data: Binary file data to upload
@@ -158,6 +184,23 @@ class VideoService:
         except Exception as e:
             logger.error(f"Error uploading to S3: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Failed to upload video to storage service.")
+    
+    @staticmethod
+    async def upload_to_s3(file_data: BinaryIO, filename: str) -> str:
+        """
+        Upload video file to S3 storage (async version)
+        
+        Args:
+            file_data: Binary file data to upload
+            filename: Name for the file in storage
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            executor,
+            VideoService._upload_to_s3_sync,
+            file_data,
+            filename
+        )
     
     @staticmethod
     def create_db_record(user_id: uuid, raw_video_id: uuid, title:str, original_url: str, db:Session) -> None:
@@ -225,9 +268,9 @@ class VideoService:
             )
     
     @classmethod
-    def process_video_upload(cls, file: UploadFile, title: str, current_user:User, db: Session) -> VideoUploadResponse:
+    async def process_video_upload(cls, file: UploadFile, title: str, current_user:User, db: Session) -> VideoUploadResponse:
         """
-        Process complete video upload workflow
+        Process complete video upload workflow (async version)
         
         Args:
             file: Uploaded video file
@@ -250,8 +293,8 @@ class VideoService:
             # Generate task ID for tracking (in a real system, this would be from a job queue)
             task_id = str(uuid.uuid4())
 
-            # Validate video properties
-            video_properties = cls.validate_video_properties(temp_filepath)
+            # Validate video properties (async - doesn't block)
+            video_properties = await cls.validate_video_properties(temp_filepath)
 
             # Get file extension
             _, ext = os.path.splitext(file.filename)
@@ -259,9 +302,9 @@ class VideoService:
             # Generate filename with extension
             upload_filename = f"{cleaned_title}{task_id}{ext}"
             
-            # Upload to Nextcloud
+            # Upload to S3 (async - doesn't block)
             with open(temp_filepath, "rb") as video_file:
-                remote_path = cls.upload_to_s3(video_file, upload_filename)
+                remote_path = await cls.upload_to_s3(video_file, upload_filename)
             
             # Create db record
             record_id = cls.create_db_record(
