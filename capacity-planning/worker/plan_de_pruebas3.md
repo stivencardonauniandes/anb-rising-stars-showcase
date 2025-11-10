@@ -174,3 +174,17 @@ Dashboard: **Performance Testing - Experimental Design**
 
 Ubicación: `/scripts/example_test_workflow/`
 
+## Conclusiones
+
+### Throughput observado
+![Observed throughput](../img/entrega3/Throughput%20observado.png)
+
+### Throughput del worker
+![Worker thorughput](../img/entrega3/Throughput%20del%20worker.png)
+
+### Worker CPU utilization
+![CPU utilization](../img/entrega3/CPU%20utilization%20worker.png)
+
+Cómo se mencionó anteriormente y cómo se puede observar en las imágenes, el throughput decrece bajo carga moderada. En las imágenes de throughput se puede ver cómo se llega a un límite de carga y se comienzan a tener periodos en los que el throughput es prácticamente nulo hasta que el sistema se vuelve a estabilizar. Esto se debe a que aunque la capa web escala correctamente, el worker no tiene ningún tipo de escalamiento, por lo cuál la instancia en la que corre llega a un 99% de uso de CPU causando estos periodos de disminución en el throughput. El uso de CPU se puede observar en la tercera imágen.
+
+De acuerdo con esto, el cuello de botella actual del sistema se encuenta en la capa de procesamiento (worker) y para poder continuar mejorando la capacidad de escalamiento se debe buscar una estrategia para escalar dicha capa. Asímismo, al tener en cuenta que se está usando una estrategia de warm pool para escalar la capa de servicios, puede que se esté desperdiciando la capacidad de alguna de las máquinas del pool. Esto debido a que puede ocurrir que el sistema llegue a su límite antes de que todas las máquinas del pool se encuentren en uso. En base a esto para mejorar la estrategia de gastos del sistema se debe buscar un balance de tal manera que la cantidad de workers utilizados sea congruente con la cantidad de máquinas en el pool de la capa de servicios.
