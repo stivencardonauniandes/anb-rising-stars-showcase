@@ -8,12 +8,13 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    DATABASE_URL=postgresql://postgres:postgres@10.0.139.51:5432/anb_showcase \
+    DATABASE_URL=postgresql://postgres:postgres@anb-rising-stars-db.c0dyuyem64yl.us-east-1.rds.amazonaws.com:5432/anb_showcase \
     REDIS_URL=redis://10.0.0.89:6379/0 \
     REDIS_HOST=10.0.0.89 \
     REDIS_PORT=6379 \
     REDIS_DB=0 \
     REDIS_PASSWORD=
+    SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/254740242224/anb-rising-stars
 
 
 
