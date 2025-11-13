@@ -13,7 +13,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     REDIS_HOST=10.0.0.89 \
     REDIS_PORT=6379 \
     REDIS_DB=0 \
-    REDIS_PASSWORD=
+    REDIS_PASSWORD= \
     SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/254740242224/anb-rising-stars
 
 
