@@ -14,6 +14,15 @@ import (
 type Config struct {
 	AppName            string
 	LogLevel           string
+	WorkerPoolSize     int
+	ProcessingTimeout  time.Duration
+	PostgresDSN        string
+	MaxDeliveries      int // Max retry attempts for queue messages
+
+	// Queue backend selection
+	QueueBackend string // "redis" or "sqs"
+
+	// Redis configuration (for queue backend)
 	RedisAddr          string
 	RedisUsername      string
 	RedisPassword      string
@@ -21,10 +30,11 @@ type Config struct {
 	RedisGroup         string
 	RedisConsumer      string
 	RedisBlockTimeout  time.Duration
-	RedisMaxDeliveries int
-	WorkerPoolSize     int
-	ProcessingTimeout  time.Duration
-	PostgresDSN        string
+
+	// SQS configuration (for queue backend)
+	SQSQueueURL string
+	SQSRegion   string
+	SQSWaitTime int32 // Long polling wait time in seconds
 
 	// Storage backend selection
 	StorageBackend string // "nextcloud" or "s3"
@@ -60,19 +70,29 @@ func Load(envPaths ...string) (*Config, error) {
 	}
 
 	cfg := &Config{
-		AppName:            getEnv("APP_NAME", "video-worker"),
-		LogLevel:           getEnv("LOG_LEVEL", "info"),
-		RedisAddr:          getEnv("REDIS_ADDR", "localhost:6379"),
-		RedisUsername:      os.Getenv("REDIS_USERNAME"),
-		RedisPassword:      os.Getenv("REDIS_PASSWORD"),
-		RedisStream:        getEnv("REDIS_STREAM", "video_tasks"),
-		RedisGroup:         getEnv("REDIS_GROUP", "video_worker"),
-		RedisConsumer:      getEnv("REDIS_CONSUMER", "video_worker_1"),
-		RedisBlockTimeout:  getDurationEnv("REDIS_BLOCK_TIMEOUT", 5*time.Second),
-		RedisMaxDeliveries: getIntEnv("REDIS_MAX_DELIVERIES", 5),
-		WorkerPoolSize:     getIntEnv("WORKER_POOL_SIZE", 4),
-		ProcessingTimeout:  getDurationEnv("PROCESSING_TIMEOUT", 5*time.Minute),
-		PostgresDSN:        os.Getenv("POSTGRES_DSN"),
+		AppName:           getEnv("APP_NAME", "video-worker"),
+		LogLevel:          getEnv("LOG_LEVEL", "info"),
+		WorkerPoolSize:    getIntEnv("WORKER_POOL_SIZE", 4),
+		ProcessingTimeout: getDurationEnv("PROCESSING_TIMEOUT", 5*time.Minute),
+		PostgresDSN:       os.Getenv("POSTGRES_DSN"),
+		MaxDeliveries:     getIntEnv("MAX_DELIVERIES", 5),
+
+		// Queue backend selection
+		QueueBackend: getEnv("QUEUE_BACKEND", "sqs"),
+
+		// Redis configuration (for queue backend)
+		RedisAddr:         getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisUsername:     os.Getenv("REDIS_USERNAME"),
+		RedisPassword:     os.Getenv("REDIS_PASSWORD"),
+		RedisStream:       getEnv("REDIS_STREAM", "video_tasks"),
+		RedisGroup:        getEnv("REDIS_GROUP", "video_worker"),
+		RedisConsumer:     getEnv("REDIS_CONSUMER", "video_worker_1"),
+		RedisBlockTimeout: getDurationEnv("REDIS_BLOCK_TIMEOUT", 5*time.Second),
+
+		// SQS configuration (for queue backend)
+		SQSQueueURL: os.Getenv("SQS_QUEUE_URL"),
+		SQSRegion:   getEnv("AWS_REGION", "us-east-1"),
+		SQSWaitTime: int32(getIntEnv("SQS_WAIT_TIME", 20)), // Long polling wait time
 
 		// Storage backend selection
 		StorageBackend: getEnv("STORAGE_BACKEND", "s3"),
@@ -80,7 +100,7 @@ func Load(envPaths ...string) (*Config, error) {
 		// NextCloud configuration
 		NextcloudURL:      os.Getenv("NEXTCLOUD_URL"),
 		NextcloudRoot:     getEnv("NEXTCLOUD_ROOT", "/remote.php/dav/files"),
-		NextcloudUsername: os.Getenv("NEXTCLOUD_USERNAME"),
+		NextcloudUsername:  os.Getenv("NEXTCLOUD_USERNAME"),
 		NextcloudPassword: os.Getenv("NEXTCLOUD_PASSWORD"),
 
 		// S3 configuration
@@ -97,6 +117,20 @@ func Load(envPaths ...string) (*Config, error) {
 
 	if cfg.PostgresDSN == "" {
 		return nil, fmt.Errorf("POSTGRES_DSN is required")
+	}
+
+	// Validate queue backend configuration
+	switch cfg.QueueBackend {
+	case "redis":
+		if cfg.RedisAddr == "" {
+			return nil, fmt.Errorf("REDIS_ADDR is required when QUEUE_BACKEND=redis")
+		}
+	case "sqs":
+		if cfg.SQSQueueURL == "" {
+			return nil, fmt.Errorf("SQS_QUEUE_URL is required when QUEUE_BACKEND=sqs")
+		}
+	default:
+		return nil, fmt.Errorf("QUEUE_BACKEND must be 'redis' or 'sqs', got: %s", cfg.QueueBackend)
 	}
 
 	// Validate storage backend configuration

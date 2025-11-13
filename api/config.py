@@ -21,8 +21,13 @@ class Config:
     # S3 Configuration
     S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "anb-rising-stars")
     
-    # Redis Configuration
+    # Redis Configuration (for caching only)
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    
+    # SQS Configuration (for message queues)
+    # Uses IAM role credentials from EC2 instance
+    SQS_QUEUE_URL: str = os.getenv("SQS_QUEUE_URL", "")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
     
     # JWT Configuration
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
@@ -69,6 +74,9 @@ class Config:
         
         if cls.ACCESS_TOKEN_EXPIRE_MINUTES <= 0:
             raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES must be positive")
+        
+        if cls.is_production() and not cls.SQS_QUEUE_URL:
+            raise ValueError("SQS_QUEUE_URL must be set in production environment")
 
 
 # Create a global config instance

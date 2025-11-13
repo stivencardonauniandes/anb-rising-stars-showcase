@@ -24,6 +24,7 @@ import (
 	nextcloudadapter "github.com/alejandro/video-worker/internal/adapters/nextcloud"
 	postgresadapter "github.com/alejandro/video-worker/internal/adapters/postgres"
 	redisadapter "github.com/alejandro/video-worker/internal/adapters/redis"
+	sqsadapter "github.com/alejandro/video-worker/internal/adapters/sqs"
 	s3adapter "github.com/alejandro/video-worker/internal/adapters/s3"
 	"github.com/alejandro/video-worker/internal/core/ports"
 	"github.com/alejandro/video-worker/internal/core/usecase"
@@ -67,20 +68,6 @@ func Run(ctx context.Context) error {
 	}()
 	if err := db.PingContext(ctx); err != nil {
 		return fmt.Errorf("ping postgres: %w", err)
-	}
-
-	redisClient := redislib.NewClient(&redislib.Options{
-		Addr:     cfg.RedisAddr,
-		Username: cfg.RedisUsername,
-		Password: cfg.RedisPassword,
-	})
-	defer func() {
-		if cerr := redisClient.Close(); cerr != nil {
-			logger.Warn("failed to close redis client", zap.Error(cerr))
-		}
-	}()
-	if err := redisClient.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("connect redis: %w", err)
 	}
 
 	registry := prometheus.NewRegistry()
@@ -171,7 +158,7 @@ func Run(ctx context.Context) error {
 	logger.Info("video worker running",
 		zap.Int("worker_pool_size", workerCount),
 		zap.Duration("processing_timeout", cfg.ProcessingTimeout),
-		zap.Duration("redis_block_timeout", cfg.RedisBlockTimeout),
+		zap.String("queue_backend", cfg.QueueBackend),
 	)
 
 	workerCtx, cancelWorkers := context.WithCancel(ctx)
@@ -184,10 +171,36 @@ func Run(ctx context.Context) error {
 		go func(id int) {
 			defer wg.Done()
 			workerIDStr := fmt.Sprintf("%d", id)
-			consumerName := fmt.Sprintf("%s-worker-%d", cfg.RedisConsumer, id)
 
-			// Create a queue instance for this worker with unique consumer name
-			queue, err := redisadapter.NewStreamQueue(ctx, redisClient, cfg.RedisStream, cfg.RedisGroup, consumerName, cfg.RedisBlockTimeout, cfg.RedisMaxDeliveries, logger, metricsAdapter)
+			// Create queue instance based on configured backend
+			var queue ports.MessageQueue
+			var err error
+
+			switch cfg.QueueBackend {
+			case "redis":
+				redisClient := redislib.NewClient(&redislib.Options{
+					Addr:     cfg.RedisAddr,
+					Username: cfg.RedisUsername,
+					Password: cfg.RedisPassword,
+				})
+				defer func() {
+					if cerr := redisClient.Close(); cerr != nil {
+						logger.Warn("failed to close redis client", zap.Error(cerr))
+					}
+				}()
+				if err := redisClient.Ping(ctx).Err(); err != nil {
+					logger.Error("failed to connect to redis", zap.Int("worker_id", id), zap.Error(err))
+					return
+				}
+				consumerName := fmt.Sprintf("%s-worker-%d", cfg.RedisConsumer, id)
+				queue, err = redisadapter.NewStreamQueue(ctx, redisClient, cfg.RedisStream, cfg.RedisGroup, consumerName, cfg.RedisBlockTimeout, cfg.MaxDeliveries, logger, metricsAdapter)
+			case "sqs":
+				queue, err = sqsadapter.NewSQSQueue(ctx, cfg.SQSQueueURL, cfg.SQSRegion, cfg.MaxDeliveries, cfg.SQSWaitTime, logger, metricsAdapter)
+			default:
+				logger.Error("unsupported queue backend", zap.String("backend", cfg.QueueBackend))
+				return
+			}
+
 			if err != nil {
 				logger.Error("failed to create queue for worker", zap.Int("worker_id", id), zap.Error(err))
 				return
@@ -201,7 +214,7 @@ func Run(ctx context.Context) error {
 				processor,
 				logger,
 				cfg.ProcessingTimeout,
-				cfg.RedisMaxDeliveries,
+				cfg.MaxDeliveries,
 				cfg.ProcessedBaseURL,
 			)
 

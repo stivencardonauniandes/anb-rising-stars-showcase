@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import boto3
-import redis
+import json
 import requests
 import uuid
 import asyncio
@@ -33,7 +33,6 @@ class VideoService:
     INVALID_VIDEO_TITLE = "El título del video no puede estar vacío."
     FILE_PROCESSING_ERROR = "Error al procesar el archivo de video."
     FILE_UPLOAD_SUCCESS = "Video subido correctamente. Procesamiento en curso."
-    REDIS_STREAM_NAME = 'video_tasks'
     FAILED_TO_UPLOAD_VIDEO = "Failed to upload video to storage service."
     
     # Use centralized configuration
@@ -251,39 +250,40 @@ class VideoService:
         return new_video.id
     
     @classmethod
-    def post_message_to_redis_stream(cls, video_id: uuid, task_id: str, source_path: str ) -> None:
+    def post_message_to_sqs(cls, video_id: uuid, task_id: str, source_path: str) -> None:
         """
-        Post a message to Redis stream for video processing
+        Post a message to SQS queue for video processing
         
         Args:
+            video_id: ID of the video record
             task_id: ID of the video processing task
+            source_path: Path to the source video file in S3
         """
         try:
-
-            # Read Redis connection from environment / .env (defaults kept for local compose)
-            redis_host = os.getenv("REDIS_HOST", "redis")
-            redis_port = int(os.getenv("REDIS_PORT", os.getenv("REDIS_PORT_DEFAULT", "6379")))
-            redis_db = int(os.getenv("REDIS_DB", "0"))
-            redis_password = os.getenv("REDIS_PASSWORD", None)
-
-            # Normal Redis stream logic
-            r = redis.Redis(
-                host=redis_host,
-                port=redis_port,
-                db=redis_db,
-                password=redis_password,
-             )
+            # Create SQS client
+            # Uses IAM role credentials from EC2 instance when running on AWS
+            sqs_client = boto3.client('sqs', region_name=config.AWS_REGION)
             
-            message = {
+            # Prepare message body
+            message_body = {
                 "task_id": task_id,
                 "video_id": str(video_id),
-                "source_path": source_path}
-            r.xadd(cls.REDIS_STREAM_NAME, message)
+                "source_path": source_path
+            }
             
-            logger.info(f"Message posted to Redis stream: task_id='{task_id}'")
+            # Send message to SQS queue
+            response = sqs_client.send_message(
+                QueueUrl=config.SQS_QUEUE_URL,
+                MessageBody=json.dumps(message_body)
+            )
+            
+            logger.info(
+                f"Message posted to SQS queue: task_id='{task_id}', "
+                f"message_id='{response.get('MessageId')}'"
+            )
             
         except Exception as e:
-            logger.error(f"Error posting message to Redis stream: {e}", exc_info=True)
+            logger.error(f"Error posting message to SQS queue: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail="Failed to queue video for processing."
@@ -337,8 +337,8 @@ class VideoService:
                 db=db
             )
 
-            # Post message on redis stream
-            cls.post_message_to_redis_stream(
+            # Post message to SQS queue
+            cls.post_message_to_sqs(
                 task_id=task_id,
                 video_id=record_id,
                 source_path=remote_path

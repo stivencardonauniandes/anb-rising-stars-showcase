@@ -306,7 +306,7 @@ class TestVideoServiceNextcloudUpload:
 
 class TestVideoServiceIntegration:
     """Test video service integration methods"""
-    @patch('services.video_service.VideoService.post_message_to_redis_stream')
+    @patch('services.video_service.VideoService.post_message_to_sqs')
     @patch('services.video_service.VideoService.cleanup_temp_file')
     @patch('services.video_service.VideoService.upload_to_nextcloud')
     @patch('services.video_service.VideoService.validate_video_properties')
@@ -317,7 +317,7 @@ class TestVideoServiceIntegration:
     def test_process_video_upload_success(self, mock_file_open, mock_validate_title, 
                                         mock_validate_file_type, mock_save_temp_file,
                                         mock_validate_properties, mock_upload_nextcloud,
-                                        mock_cleanup, mock_post_message_to_redis_stream):
+                                        mock_cleanup, mock_post_message_to_sqs):
         """Test successful complete video upload process"""
         # Setup mocks
         mock_validate_title.return_value = "Clean Title"
@@ -570,7 +570,7 @@ class TestVideoServiceDatabaseOperations:
 class TestVideoServiceAdvanced:
     """Advanced video service tests"""
     
-    @patch('services.video_service.VideoService.post_message_to_redis_stream')
+    @patch('services.video_service.VideoService.post_message_to_sqs')
     @patch('services.video_service.VideoService.cleanup_temp_file')
     @patch('services.video_service.VideoService.upload_to_nextcloud')
     @patch('services.video_service.VideoService.validate_video_properties')
@@ -581,7 +581,7 @@ class TestVideoServiceAdvanced:
     def test_process_video_upload_with_database_integration(self, mock_file_open, mock_validate_title, 
                                                           mock_validate_file_type, mock_save_temp_file,
                                                           mock_validate_properties, mock_upload_nextcloud,
-                                                          mock_cleanup, mock_redis_post):
+                                                          mock_cleanup, mock_post_message_to_sqs):
         """Test video upload process with database integration"""
         # Setup mocks
         mock_validate_title.return_value = "Database Video"
