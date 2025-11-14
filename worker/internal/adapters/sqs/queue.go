@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -80,9 +79,6 @@ func (q *SQSQueue) Fetch(ctx context.Context) (*ports.QueueMessage, error) {
 		QueueUrl:            aws.String(q.queueURL),
 		MaxNumberOfMessages: 1,
 		WaitTimeSeconds:     q.waitTime,
-		AttributeNames: []types.QueueAttributeName{
-			types.QueueAttributeNameApproximateReceiveCount,
-		},
 	})
 
 	if err != nil {
@@ -107,17 +103,9 @@ func (q *SQSQueue) Fetch(ctx context.Context) (*ports.QueueMessage, error) {
 		return nil, fmt.Errorf("parse message body: %w", err)
 	}
 
-	// Extract attempt count from message attributes if available
+	// Extract attempt count from message body
+	// The attempt field is set when messages are retried via the Fail method
 	attempt := 0
-	if msg.Attributes != nil {
-		if receiveCount, ok := msg.Attributes[string(types.QueueAttributeNameApproximateReceiveCount)]; ok {
-			if count, err := strconv.Atoi(receiveCount); err == nil {
-				attempt = count - 1 // ReceiveCount starts at 1, attempt starts at 0
-			}
-		}
-	}
-
-	// Check if attempt is in message body (for retries)
 	if attemptVal, ok := messageBody["attempt"]; ok {
 		if attemptInt, err := strconv.Atoi(fmt.Sprint(attemptVal)); err == nil {
 			attempt = attemptInt
