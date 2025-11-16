@@ -1,0 +1,143 @@
+🚀 Starting concurrency test...
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com/api/videos/upload
+   - Duration: 60 seconds
+   - Concurrent Users: 5
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+
+👤 User 1 started uploading videos...
+👤 User 2 started uploading videos...
+👤 User 3 started uploading videos...
+👤 User 4 started uploading videos...
+👤 User 5 started uploading videos...
+✅ User 5 - Request 1 - Success in 4259ms - Task ID: 5184963a-24af-4fb1-abdb-96bcf490a2fa
+✅ User 1 - Request 1 - Success in 4760ms - Task ID: df122981-8b53-4f4d-936a-deea5626ad77
+✅ User 4 - Request 1 - Success in 4872ms - Task ID: 890b1cec-20a9-45a3-add4-69f6dd06924b
+✅ User 3 - Request 1 - Success in 5058ms - Task ID: c168d464-d36d-42bd-bd0b-9a84aee48da2
+✅ User 2 - Request 1 - Success in 5060ms - Task ID: af186059-b142-435a-b4d1-8d91d42c530c
+✅ User 5 - Request 2 - Success in 2830ms - Task ID: 64a6ef5f-e689-4484-af6e-041a5c9c1aa3
+✅ User 3 - Request 2 - Success in 2519ms - Task ID: f9115300-fdf7-4946-ada0-486d435b5097
+✅ User 2 - Request 2 - Success in 3047ms - Task ID: 3313b445-c917-400d-bd20-33d738a73749
+✅ User 4 - Request 2 - Success in 3236ms - Task ID: 00210251-d66b-4935-acb9-4349165c3c22
+✅ User 1 - Request 2 - Success in 3639ms - Task ID: 684449a9-2ef6-4583-89fa-1ca908e8e1db
+✅ User 5 - Request 3 - Success in 2664ms - Task ID: 00e667ac-9ff5-40a2-91e9-4c4b4b720e85
+✅ User 3 - Request 3 - Success in 2511ms - Task ID: dd23a154-211c-4d3b-8b22-0fdf73e696df
+✅ User 4 - Request 3 - Success in 2820ms - Task ID: 8df57068-003c-4e2f-a445-53e88779879f
+✅ User 1 - Request 3 - Success in 2925ms - Task ID: d85f3337-db72-4993-a194-6f69e446d46f
+✅ User 2 - Request 3 - Success in 3424ms - Task ID: bae74a81-c2d2-4fc6-9dcf-0d335eb12c7d
+✅ User 5 - Request 4 - Success in 2722ms - Task ID: bc031255-1be4-4e5d-8c92-7b3cbee5671f
+✅ User 3 - Request 4 - Success in 2390ms - Task ID: 75eb1210-f08c-467c-b81d-c7785df0a0db
+✅ User 4 - Request 4 - Success in 2611ms - Task ID: f3eff286-6e7e-4048-a547-1364836eb8df
+✅ User 1 - Request 4 - Success in 2527ms - Task ID: df9619da-7242-4701-81ea-951b73d9d422
+✅ User 2 - Request 4 - Success in 2879ms - Task ID: 50c3358e-00ec-4cd8-84b0-8eb63cc53f01
+✅ User 3 - Request 5 - Success in 2827ms - Task ID: 2dac74c2-8329-47e8-b11b-eae65f4fad40
+✅ User 5 - Request 5 - Success in 2829ms - Task ID: d76d4173-5c57-4f7e-a567-f89643ed2dca
+✅ User 4 - Request 5 - Success in 2511ms - Task ID: 0981c8df-fa7a-4c82-a84e-df97a719c523
+✅ User 1 - Request 5 - Success in 2327ms - Task ID: 40d49bf7-b0be-4ec3-bdc4-6a88d9dfd01a
+✅ User 2 - Request 5 - Success in 2306ms - Task ID: 9a1fb95d-d336-4aca-9eb2-015e37573bca
+✅ User 3 - Request 6 - Success in 2224ms - Task ID: 53e738aa-31b3-423d-945f-bf76d6670711
+✅ User 5 - Request 6 - Success in 2654ms - Task ID: b3640e61-568d-43bb-ab1e-119b6235a4ce
+✅ User 4 - Request 6 - Success in 2847ms - Task ID: edaa52e5-800c-41e7-a8fb-e75573f48e25
+✅ User 1 - Request 6 - Success in 2757ms - Task ID: cebdfc79-8435-493f-9eef-d8459833fbfc
+✅ User 2 - Request 6 - Success in 2693ms - Task ID: e7b4d98d-b5ef-4676-996a-23433faad467
+✅ User 3 - Request 7 - Success in 2410ms - Task ID: 6148075e-e4d8-4977-926d-3cfdd6ff3c21
+✅ User 5 - Request 7 - Success in 2402ms - Task ID: b5dcf066-57cf-4986-a5e3-ee9d7cbf96dd
+✅ User 4 - Request 7 - Success in 2345ms - Task ID: 69098e93-099f-4aa0-a72a-1c3d7a37ee8b
+✅ User 1 - Request 7 - Success in 2521ms - Task ID: c32286ec-b81a-4dc1-a7b0-48b175de6f2b
+✅ User 2 - Request 7 - Success in 2585ms - Task ID: f2ae75b5-6c14-4acf-b666-f51b2ee70871
+✅ User 3 - Request 8 - Success in 3014ms - Task ID: 5a2a92c2-870f-4017-9eb8-2f798b1296e6
+✅ User 5 - Request 8 - Success in 2841ms - Task ID: b1603ee1-5ce4-4afe-a5d4-0eddba1b3dfc
+✅ User 4 - Request 8 - Success in 2541ms - Task ID: 6c2101e5-b181-4eb6-96d2-87ab303e1afa
+✅ User 1 - Request 8 - Success in 2559ms - Task ID: 3212bd42-a1d3-48a8-8422-8e01c166ea9e
+✅ User 2 - Request 8 - Success in 2347ms - Task ID: 942ecd65-0169-4b44-a54a-7562c3853c46
+✅ User 3 - Request 9 - Success in 2328ms - Task ID: 4def8b92-8181-4b2b-8153-bc58814f8293
+✅ User 5 - Request 9 - Success in 2759ms - Task ID: 0024d9e0-4c0f-4b71-a85a-c34ea9bad95e
+✅ User 4 - Request 9 - Success in 2803ms - Task ID: f2558aac-4068-491e-8ba0-3efc68dbad21
+✅ User 2 - Request 9 - Success in 2738ms - Task ID: 0f09df6b-550f-4b68-bec9-836cf5d5ba60
+✅ User 1 - Request 9 - Success in 3111ms - Task ID: 42e3d96d-b3b2-4fbf-b853-500d6057ea68
+✅ User 3 - Request 10 - Success in 2322ms - Task ID: 2b11f90b-b1be-4454-b584-e65dce0db523
+✅ User 5 - Request 10 - Success in 2141ms - Task ID: edbe6abb-9986-464f-9635-9c4f1f047c96
+✅ User 1 - Request 10 - Success in 2036ms - Task ID: 4541d65a-8939-4d5c-ac06-0db0a9f7138b
+✅ User 4 - Request 10 - Success in 2701ms - Task ID: 461d7203-af32-4ed3-a760-c366e54d38b5
+✅ User 2 - Request 10 - Success in 3084ms - Task ID: 24cd6bc4-3d69-4142-9911-03b419a73803
+✅ User 3 - Request 11 - Success in 2653ms - Task ID: 40b0f686-1538-4a05-944c-c95962e49021
+✅ User 5 - Request 11 - Success in 2402ms - Task ID: 11290caf-e05c-489b-a06d-cf3290b8f9c7
+✅ User 1 - Request 11 - Success in 2238ms - Task ID: cd479872-9e25-450c-9fc0-ec80cf963e8a
+✅ User 4 - Request 11 - Success in 2132ms - Task ID: b769b9ad-6e8f-43a5-94a6-b3cb5596b8f5
+✅ User 2 - Request 11 - Success in 2685ms - Task ID: 6bffa41c-cebf-4536-b207-7c9686d5b673
+✅ User 3 - Request 12 - Success in 2489ms - Task ID: 100e3888-afdf-4a16-802a-527cd2db7a37
+✅ User 4 - Request 12 - Success in 2311ms - Task ID: a5e98c61-2997-4067-afea-f0c9e0690e31
+✅ User 1 - Request 12 - Success in 2500ms - Task ID: 2984140e-62b1-47db-a543-95903ee9e323
+✅ User 5 - Request 12 - Success in 3549ms - Task ID: b2d7f071-1a02-4760-a69f-b76b3356a638
+✅ User 3 - Request 13 - Success in 2559ms - Task ID: b43a141a-548e-4db4-94b7-82aaa0814de7
+✅ User 2 - Request 12 - Success in 2563ms - Task ID: 2d59bb74-211f-4486-ae50-169a29b5ae9d
+✅ User 1 - Request 13 - Success in 2602ms - Task ID: c2792c45-4123-4bcb-8a00-57cb2fb5d949
+✅ User 5 - Request 13 - Success in 2442ms - Task ID: 4085add1-1a6d-4e16-ae98-df77c34c21a8
+✅ User 4 - Request 13 - Success in 3108ms - Task ID: 410a7133-ea4d-408d-a42c-6f4334a723c4
+✅ User 2 - Request 13 - Success in 2280ms - Task ID: 32c1cc55-a1ef-41ee-9c4e-b0438fd2aa91
+✅ User 3 - Request 14 - Success in 2283ms - Task ID: e109c64d-a883-48aa-9908-bf3c3ef285e6
+✅ User 1 - Request 14 - Success in 2163ms - Task ID: 1a19aaf6-094d-4805-b9f6-3113e84d55ff
+✅ User 5 - Request 14 - Success in 2407ms - Task ID: 980febe0-00d7-41ea-8470-9a2b7bd04778
+✅ User 4 - Request 14 - Success in 2403ms - Task ID: bf799600-1fd5-4dbf-88e9-70c6cdc844ff
+✅ User 2 - Request 14 - Success in 2524ms - Task ID: e5f07938-fbba-46f9-ab01-af9be236b340
+✅ User 3 - Request 15 - Success in 2813ms - Task ID: e118685b-b5b9-4d79-9e62-6eb051df59cf
+✅ User 1 - Request 15 - Success in 2690ms - Task ID: 97606e8e-0228-4390-9894-6de193102df8
+✅ User 5 - Request 15 - Success in 2447ms - Task ID: b5a439fc-fb52-4092-ae0c-d66e4e954619
+✅ User 3 - Request 16 - Success in 2275ms - Task ID: d551b80a-5d2c-4801-8ce7-8d7411aed1d9
+✅ User 2 - Request 15 - Success in 2565ms - Task ID: 8790ad0d-6cac-480b-841c-e5edb0a49aed
+✅ User 5 - Request 16 - Success in 2021ms - Task ID: c3080a37-a02f-41f0-9c48-2b7aa8299efa
+✅ User 1 - Request 16 - Success in 2022ms - Task ID: a68db680-9c0a-4981-854f-a53247e25b26
+✅ User 4 - Request 15 - Success in 5865ms - Task ID: bcca3e72-9270-43db-982d-1315c458717a
+✅ User 2 - Request 16 - Success in 2315ms - Task ID: 4aed9c15-6559-4cf4-80b9-ed597dc56d86
+✅ User 3 - Request 17 - Success in 2317ms - Task ID: ab7164f4-bfae-4fd1-884a-324f81579375
+✅ User 5 - Request 17 - Success in 2511ms - Task ID: 618134d1-467f-4b70-97e1-ab0536f5887e
+✅ User 1 - Request 17 - Success in 2509ms - Task ID: 4ffa4b18-0fba-4c2a-8e51-295dde1abc0e
+✅ User 3 - Request 18 - Success in 2321ms - Task ID: 1e439c20-27a5-4dfd-8a28-fd32f893fa88
+✅ User 4 - Request 16 - Success in 2863ms - Task ID: b4a196a2-38bd-4038-b030-8c4eff589d6a
+✅ User 2 - Request 17 - Success in 3237ms - Task ID: f32bd8e8-b479-40b5-9c71-ba0a48b14f34
+✅ User 1 - Request 18 - Success in 2660ms - Task ID: b7788838-3dcd-4d45-8c7c-8b91684cba87
+✅ User 5 - Request 18 - Success in 2809ms - Task ID: 08aca6e4-f38d-4679-9524-09f03e1df88b
+✅ User 3 - Request 19 - Success in 2136ms - Task ID: baea8258-3341-4d41-84e4-516d8aba4f33
+✅ User 4 - Request 17 - Success in 2469ms - Task ID: cf4fac30-40f1-4496-90eb-5e25946c8278
+✅ User 2 - Request 18 - Success in 2323ms - Task ID: ec7f74e9-d7d5-477f-a479-18881fc4b51d
+✅ User 5 - Request 19 - Success in 2685ms - Task ID: e4dfc9bf-132c-457b-a4a0-1ff9cae04ebd
+✅ User 1 - Request 19 - Success in 2833ms - Task ID: 3acf7c26-ec11-4aae-b3a8-0e030af7a34b
+✅ User 3 - Request 20 - Success in 2257ms - Task ID: 6bf4c583-3063-4a45-8938-02970fd7a0f5
+✅ User 4 - Request 18 - Success in 2217ms - Task ID: 6f2c808a-8288-4a1d-856c-26c95e32f2f5
+✅ User 2 - Request 19 - Success in 2513ms - Task ID: 8e200ff0-e012-40f8-bdeb-b12189dab36e
+✅ User 1 - Request 20 - Success in 2818ms - Task ID: c84b7c22-ed47-4f89-b577-3e0e626df191
+✅ User 3 - Request 21 - Success in 2471ms - Task ID: 34ac2a40-03d8-4023-9018-627437a259a4
+✅ User 5 - Request 20 - Success in 2930ms - Task ID: fc40fd17-5399-4870-8a50-81aaeb7064dc
+✅ User 4 - Request 19 - Success in 2529ms - Task ID: 225559fc-c581-428a-a05f-357cbba0afbc
+✅ User 2 - Request 20 - Success in 2065ms - Task ID: c3df7206-199c-4456-82fc-823ad3d8f8d1
+✅ User 1 - Request 21 - Success in 2431ms - Task ID: 654777cf-15cc-4e91-adad-5a61732d804c
+✅ User 5 - Request 21 - Success in 2588ms - Task ID: 9eeea61e-131b-4855-b79b-878aa376f1ab
+✅ User 3 - Request 22 - Success in 2616ms - Task ID: 5539801f-735b-4cb0-bf0a-7e6c531cdf10
+✅ User 2 - Request 21 - Success in 2588ms - Task ID: 6c07a1c5-0c6e-44b6-a3b4-429bd8a30110
+✅ User 4 - Request 20 - Success in 2885ms - Task ID: 9166c9ff-830d-4260-b861-227752ab4ddf
+👤 User 4 finished - Total requests: 20
+✅ User 1 - Request 22 - Success in 1808ms - Task ID: 9c1bd840-74f2-44ab-aba6-680358956954
+👤 User 1 finished - Total requests: 22
+✅ User 5 - Request 22 - Success in 2362ms - Task ID: d86c6451-95a4-4760-bb3d-25e1606d9f26
+✅ User 3 - Request 23 - Success in 2443ms - Task ID: 2101e83c-30cb-4a42-abc8-cfcf46779c8b
+👤 User 5 finished - Total requests: 22
+👤 User 3 finished - Total requests: 23
+✅ User 2 - Request 22 - Success in 1679ms - Task ID: 9bf35f2f-39ca-412d-b82d-d52212138301
+👤 User 2 finished - Total requests: 22
+
+═══════════════════════════════════════════════════════════
+📊 CONCURRENCY TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 61.73 seconds
+📈 Total Requests: 109
+✅ Successful Requests: 109
+❌ Failed Requests: 0
+📊 Success Rate: 100.00%
+⚡ Requests per Second: 1.77
+
+⏱️  Response Time Statistics:
+   - Average: 2701.79ms
+   - Minimum: 1679ms
+   - Maximum: 5865ms
+
+═══════════════════════════════════════════════════════════

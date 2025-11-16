@@ -1,0 +1,66 @@
+🚀 Starting Ramp-Up Load Test...
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com/api/videos/upload
+   - Max Users: 100
+   - Ramp-Up Duration: 180 seconds (3 minutes)
+   - Hold Duration: 300 seconds (5 minutes)
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+
+📈 Phase 1: Ramp-Up (0 → 100 users in 3 minutes)
+   Starting users gradually...
+   ✅ Started user 10/100
+   ✅ Started user 20/100
+   ✅ Started user 30/100
+   ✅ Started user 40/100
+   ✅ Started user 50/100
+   ✅ Started user 60/100
+   ✅ Started user 70/100
+   ✅ Started user 80/100
+   ✅ Started user 90/100
+   ✅ Started user 100/100
+
+📊 Phase 2: Hold (100 users for 5 minutes)
+   All users active, maintaining load...
+   Hold phase started at 2025-11-14T23:19:55.758Z
+
+⏳ Waiting for all requests to complete...
+
+═══════════════════════════════════════════════════════════
+📊 RAMP-UP LOAD TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 523.53 seconds (8.73 minutes)
+👥 Max Concurrent Users: 100
+📈 Total Requests: 928
+✅ Successful Requests: 896
+❌ Failed Requests: 32
+📊 Success Rate: 96.55%
+⚡ Requests per Second: 1.77
+
+⏱️  Response Time Statistics:
+   - Average: 44736.55ms
+   - Minimum: 1581ms
+   - Maximum: 120433ms
+   - P50 (Median): 42729ms
+   - P95: 85999ms
+   - P99: 110485ms
+
+📉 Performance Analysis:
+   - Ramp-Up Avg Response Time: 28779.70ms
+   - Hold Phase Avg Response Time: 54214.80ms
+   - Performance Degradation: 88.38%
+   ⚠️  WARNING: Significant performance degradation detected (>50%)
+
+❌ Errors Summary:
+   - Status 500: 3 errors
+   - Status 504: 26 errors
+   - Status UNKNOWN: 3 errors
+
+   First 5 errors:
+   - User 4, Request 5: read ETIMEDOUT (N/A)
+   - User 13, Request 1: read ETIMEDOUT (N/A)
+   - User 28, Request 6: Request failed with status code 504 (504)
+   - User 25, Request 6: Request failed with status code 504 (504)
+   - User 68, Request 2: Request failed with status code 504 (504)
+
+═══════════════════════════════════════════════════════════
+✅ Test passed: Success rate above 95%
