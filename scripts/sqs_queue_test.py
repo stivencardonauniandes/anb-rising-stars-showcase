@@ -18,25 +18,10 @@ import boto3
 import click
 from botocore.exceptions import ClientError
 
-SQS_QUEUE_NAME = 'video_tasks'
-
 
 def get_sqs_client(region: str = 'us-east-1'):
     """Create and return an SQS client connection."""
     return boto3.client('sqs', region_name=region)
-
-
-def get_queue_url(client, queue_name: str) -> str:
-    """Get the URL for an SQS queue."""
-    try:
-        response = client.get_queue_url(QueueName=queue_name)
-        return response['QueueUrl']
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'AWS.SimpleQueueService.NonExistentQueue':
-            click.echo(f"Queue '{queue_name}' does not exist. Creating it...", err=True)
-            response = client.create_queue(QueueName=queue_name)
-            return response['QueueUrl']
-        raise
 
 
 def generate_task_message(video_id: Optional[str] = None, source_path: Optional[str] = None) -> dict:
@@ -82,7 +67,7 @@ def cli():
 
 @cli.command()
 @click.option('--region', default='us-east-1', help='AWS region (default: us-east-1)')
-@click.option('--queue-name', default=SQS_QUEUE_NAME, help=f'SQS queue name (default: {SQS_QUEUE_NAME})')
+@click.option('--queue-url', required=True, help='SQS queue URL')
 @click.option('--rate', default=100, help='Number of tasks to add per second (default: 100, 0 for unlimited)')
 @click.option('--duration', default=60, help='Duration of the test in seconds (default: 60, ignored if --manual-stop)')
 @click.option('--target-size', default=10000, help='Target queue size to reach (default: 10000, ignored if --manual-stop)')
@@ -90,7 +75,7 @@ def cli():
 @click.option('--batch-size', default=10, help='Number of tasks to add per batch (default: 10, higher = faster saturation, max 10 for SQS)')
 @click.option('--video-id', default=None, help='Optional video ID (generates random UUID if not provided)')
 @click.option('--source-path', default=None, help='Optional source path (generates test path if not provided)')
-def saturation(region: str, queue_name: str, rate: int, duration: int, target_size: int, manual_stop: bool, batch_size: int, video_id: str, source_path: str):
+def saturation(region: str, queue_url: str, rate: int, duration: int, target_size: int, manual_stop: bool, batch_size: int, video_id: str, source_path: str):
     """
     Saturation Test: Continuously add tasks to the SQS queue to test system limits.
     
@@ -121,7 +106,7 @@ def saturation(region: str, queue_name: str, rate: int, duration: int, target_si
     
     click.echo(f"🚀 Starting Saturation Test")
     click.echo(f"   AWS Region: {region}")
-    click.echo(f"   Queue: {queue_name}")
+    click.echo(f"   Queue URL: {queue_url}")
     click.echo(f"   Rate: {'UNLIMITED (maximum saturation)' if rate == 0 else f'{rate} tasks/second'}")
     click.echo(f"   Batch Size: {batch_size} tasks per batch")
     if manual_stop:
@@ -133,8 +118,7 @@ def saturation(region: str, queue_name: str, rate: int, duration: int, target_si
     
     try:
         client = get_sqs_client(region)
-        queue_url = get_queue_url(client, queue_name)
-        click.echo(f"✓ Connected to SQS queue: {queue_url}")
+        click.echo(f"✓ Connected to SQS")
     except Exception as e:
         click.echo(f"✗ Failed to connect to SQS: {e}", err=True)
         return
@@ -256,14 +240,14 @@ def saturation(region: str, queue_name: str, rate: int, duration: int, target_si
 
 @cli.command()
 @click.option('--region', default='us-east-1', help='AWS region (default: us-east-1)')
-@click.option('--queue-name', default=SQS_QUEUE_NAME, help=f'SQS queue name (default: {SQS_QUEUE_NAME})')
+@click.option('--queue-url', required=True, help='SQS queue URL')
 @click.option('--target', default=1000, help='Target number of tasks to maintain (default: 1000)')
 @click.option('--rate', default=50, help='Number of tasks to add per second (default: 50)')
 @click.option('--duration', default=300, help='Duration of the test in seconds (default: 300)')
 @click.option('--tolerance', default=0.1, help='Tolerance as percentage (default: 0.1 = 10%)')
 @click.option('--video-id', default=None, help='Optional video ID (generates random UUID if not provided)')
 @click.option('--source-path', default=None, help='Optional source path (generates test path if not provided)')
-def steady_state(region: str, queue_name: str, target: int, rate: int, duration: int, tolerance: float, video_id: str, source_path: str):
+def steady_state(region: str, queue_url: str, target: int, rate: int, duration: int, tolerance: float, video_id: str, source_path: str):
     """
     Steady-State Test: Maintain a constant number of elements in the queue.
     
@@ -283,7 +267,7 @@ def steady_state(region: str, queue_name: str, target: int, rate: int, duration:
     """
     click.echo(f"⚖️  Starting Steady-State Test")
     click.echo(f"   AWS Region: {region}")
-    click.echo(f"   Queue: {queue_name}")
+    click.echo(f"   Queue URL: {queue_url}")
     click.echo(f"   Target: {target} tasks")
     click.echo(f"   Base rate: {rate} tasks/second")
     click.echo(f"   Duration: {duration} seconds")
@@ -292,8 +276,7 @@ def steady_state(region: str, queue_name: str, target: int, rate: int, duration:
     
     try:
         client = get_sqs_client(region)
-        queue_url = get_queue_url(client, queue_name)
-        click.echo(f"✓ Connected to SQS queue: {queue_url}")
+        click.echo(f"✓ Connected to SQS")
     except Exception as e:
         click.echo(f"✗ Failed to connect to SQS: {e}", err=True)
         return
@@ -461,8 +444,8 @@ def steady_state(region: str, queue_name: str, target: int, rate: int, duration:
 
 @cli.command()
 @click.option('--region', default='us-east-1', help='AWS region (default: us-east-1)')
-@click.option('--queue-name', default=SQS_QUEUE_NAME, help=f'SQS queue name (default: {SQS_QUEUE_NAME})')
-def status(region: str, queue_name: str):
+@click.option('--queue-url', required=True, help='SQS queue URL')
+def status(region: str, queue_url: str):
     """
     Show current status of the SQS queue.
     
@@ -471,14 +454,12 @@ def status(region: str, queue_name: str):
     """
     click.echo(f"📊 SQS Queue Status")
     click.echo(f"   AWS Region: {region}")
-    click.echo(f"   Queue: {queue_name}")
+    click.echo(f"   Queue URL: {queue_url}")
     click.echo()
     
     try:
         client = get_sqs_client(region)
-        queue_url = get_queue_url(client, queue_name)
         click.echo(f"✓ Connected to SQS")
-        click.echo(f"   Queue URL: {queue_url}")
         click.echo()
     except Exception as e:
         click.echo(f"✗ Failed to connect to SQS: {e}", err=True)
@@ -530,10 +511,10 @@ def status(region: str, queue_name: str):
 
 @cli.command()
 @click.option('--region', default='us-east-1', help='AWS region (default: us-east-1)')
-@click.option('--queue-name', default=SQS_QUEUE_NAME, help=f'SQS queue name (default: {SQS_QUEUE_NAME})')
+@click.option('--queue-url', required=True, help='SQS queue URL')
 @click.option('--video-id', default=None, help='Optional video ID (generates random UUID if not provided)')
 @click.option('--source-path', default=None, help='Optional source path (generates test path if not provided)')
-def add_task(region: str, queue_name: str, video_id: str, source_path: str):
+def add_task(region: str, queue_url: str, video_id: str, source_path: str):
     """
     Add a single task to the SQS queue.
     
@@ -552,12 +533,11 @@ def add_task(region: str, queue_name: str, video_id: str, source_path: str):
     """
     click.echo(f"➕ Adding Single Task to SQS Queue")
     click.echo(f"   AWS Region: {region}")
-    click.echo(f"   Queue: {queue_name}")
+    click.echo(f"   Queue URL: {queue_url}")
     click.echo()
     
     try:
         client = get_sqs_client(region)
-        queue_url = get_queue_url(client, queue_name)
         click.echo(f"✓ Connected to SQS")
     except Exception as e:
         click.echo(f"✗ Failed to connect to SQS: {e}", err=True)
@@ -592,9 +572,9 @@ def add_task(region: str, queue_name: str, video_id: str, source_path: str):
 
 @cli.command()
 @click.option('--region', default='us-east-1', help='AWS region (default: us-east-1)')
-@click.option('--queue-name', default=SQS_QUEUE_NAME, help=f'SQS queue name (default: {SQS_QUEUE_NAME})')
+@click.option('--queue-url', required=True, help='SQS queue URL')
 @click.confirmation_option(prompt='Are you sure you want to purge the queue?')
-def clear(region: str, queue_name: str):
+def clear(region: str, queue_url: str):
     """
     Purge all messages from the SQS queue.
     
@@ -605,12 +585,11 @@ def clear(region: str, queue_name: str):
     """
     click.echo(f"🗑️  Purging SQS Queue")
     click.echo(f"   AWS Region: {region}")
-    click.echo(f"   Queue: {queue_name}")
+    click.echo(f"   Queue URL: {queue_url}")
     click.echo()
     
     try:
         client = get_sqs_client(region)
-        queue_url = get_queue_url(client, queue_name)
     except Exception as e:
         click.echo(f"✗ Failed to connect to SQS: {e}", err=True)
         return
