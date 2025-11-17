@@ -2,16 +2,63 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const https = require('https');
+
+// Handle EPIPE errors when output is redirected (e.g., node script.js >> output.txt)
+// This prevents the process from crashing when the pipe is closed
+process.stdout.on('error', (err) => {
+  if (err.code === 'EPIPE') {
+    // Silently ignore EPIPE errors when stdout is closed
+    process.exit(0);
+  }
+});
+
+process.stderr.on('error', (err) => {
+  if (err.code === 'EPIPE') {
+    // Silently ignore EPIPE errors when stderr is closed
+    process.exit(0);
+  }
+});
 
 // Configuration
-const API_URL = 'http://localhost:8000/api/videos/upload';
-const AUTH_TOKEN = process.env.AUTH_TOKEN || 'YOUR_TOKEN_HERE';
+const API_URL = 'http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com/api/videos/upload';
+const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwamt6em1fMTc2MzAwMzk5MjIyOEBleGFtcGxlLmNvbSIsImV4cCI6MTc2MzE3ODc1N30.ADrOd58NoEu4V6wIsJeRyZanC-H2-QgLoKAseB_xPPM';
 const VIDEO_FILE_PATH = path.join(__dirname, '..', 'sample-video.mp4');
 
+// Create HTTP agents with keep-alive to reuse connections and prevent socket closures
+// This significantly improves performance and prevents "socket closed" errors
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+  maxSockets: 50, // Maximum number of sockets per host
+  maxFreeSockets: 10, // Maximum number of free sockets to keep open
+  timeout: 60000, // Socket timeout
+  scheduling: 'fifo' // First in, first out scheduling
+});
+
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: 60000,
+  scheduling: 'fifo'
+});
+
+// Configure axios to use the agents
+const axiosInstance = axios.create({
+  httpAgent: httpAgent,
+  httpsAgent: httpsAgent,
+  timeout: 300000, // 5 minutes timeout
+  maxContentLength: Infinity,
+  maxBodyLength: Infinity
+});
+
 // Test parameters
-const MAX_USERS = parseInt(process.env.MAX_USERS) || 100; // Default 100 users
+const MAX_USERS = parseInt(process.env.MAX_USERS) || 300; // Default 100 users
 const RAMP_UP_DURATION = 3 * 60 * 1000; // 3 minutes in milliseconds
-const HOLD_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const HOLD_DURATION = 3 * 60 * 1000; // 5 minutes in milliseconds
 
 // Statistics
 const stats = {
@@ -36,13 +83,12 @@ async function uploadVideo(userId, requestNumber) {
     formData.append('title', `ramp_user${userId}_req${requestNumber}`);
     formData.append('file', fs.createReadStream(VIDEO_FILE_PATH));
 
-    // Make request
-    const response = await axios.post(API_URL, formData, {
+    // Make request using the configured axios instance with keep-alive
+    const response = await axiosInstance.post(API_URL, formData, {
       headers: {
         'Authorization': `Bearer ${AUTH_TOKEN}`,
         ...formData.getHeaders()
-      },
-      timeout: 300000 // 5 minutes timeout
+      }
     });
 
     const endTime = Date.now();
@@ -132,7 +178,8 @@ function calculateRampUpSchedule(maxUsers, rampDuration) {
 
 // Main function
 async function runRampUpTest() {
-  console.log('🚀 Starting Ramp-Up Load Test...');
+  const start = Date.now();
+  console.log(`🚀 Starting Ramp-Up Load Test at ${new Date(start).toISOString()}`);
   console.log(`📊 Configuration:`);
   console.log(`   - API URL: ${API_URL}`);
   console.log(`   - Max Users: ${MAX_USERS}`);
@@ -285,6 +332,10 @@ async function runRampUpTest() {
     console.log('');
   }
   
+  const end = Date.now();
+  const duration = end - start;
+  console.log(`🏁 Test completed at ${new Date(end).toISOString()}`);
+  console.log(`🕒 Total test duration: ${duration / 1000} seconds (${(duration / 1000 / 60).toFixed(2)} minutes)`);
   console.log('═══════════════════════════════════════════════════════════');
   
   // Return exit code based on success rate
