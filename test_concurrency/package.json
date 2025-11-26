@@ -11,7 +11,8 @@
     "ramp:300": "node ramp_300_users.js",
     "ramp:500": "node ramp_500_users.js",
     "ramp:progressive": "node ramp_progressive.js",
-    "ramp:custom": "node ramp_test.js"
+    "ramp:custom": "node ramp_test.js",
+    "stability": "node stability_test.js"
   },
   "keywords": [
     "concurrency",

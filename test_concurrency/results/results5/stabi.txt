@@ -1,0 +1,81 @@
+🚀 Starting Stability Test at 2025-11-26T03:01:01.792Z
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com:8000/api/videos/upload
+   - Base Level (X): 200 users
+   - Stability Level (80% of X): 160 users
+   - Ramp-Up Duration: 60 seconds (60 seconds)
+   - Hold Duration: 300 seconds (5 minutes)
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+   - Video File Size: 13.14 MB
+
+📈 Phase 1: Ramp-Up (0 → 160 users in 60 seconds)
+   Starting users gradually...
+   ✅ Started user 20/160
+   ✅ Started user 40/160
+   ✅ Started user 60/160
+   ✅ Started user 80/160
+   ✅ Started user 100/160
+   ✅ Started user 120/160
+   ✅ Started user 140/160
+   ✅ Started user 160/160
+
+📊 Phase 2: Stability Hold (160 users for 5 minutes)
+   All users active, maintaining stable load at 80% of base level...
+   Stability phase started at 2025-11-26T03:02:01.793Z
+
+⏳ Waiting for all requests to complete...
+
+═══════════════════════════════════════════════════════════
+📊 STABILITY TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 1304.35 seconds (21.74 minutes)
+👥 Stability Level: 160 users (80% of 200)
+📈 Total Requests: 261
+✅ Successful Requests: 211
+❌ Failed Requests: 50
+📊 Success Rate: 80.84%
+
+📊 Throughput Metrics (Comparable across scenarios):
+   - MB/min: 127.53
+   - MB/s: 2.13
+   - Total MB Uploaded: 2772.44
+   - Video File Size: 13.14 MB
+
+⏱️  Latency Statistics (per video):
+   - Average: 531337.42ms
+   - Minimum: 54372ms
+   - Maximum: 1070752ms
+   - Standard Deviation: 326665.80ms
+   - P50 (Median): 344478.00ms
+   - P95: 1006338.00ms
+   - P99: 1012261.00ms
+
+📉 Variability Analysis (Hold Phase):
+   - Average Processing Time: 899308.34ms
+   - Standard Deviation: 227810.48ms
+   - Coefficient of Variation: 25.33%
+   - P50 (Median): 998957.00ms
+   - P95: 1012261.00ms
+   - P99: 1015765.00ms
+
+📊 Performance Comparison (Ramp-Up vs Hold):
+   - Ramp-Up Avg Response Time: 262942.09ms
+   - Hold Phase Avg Response Time: 899308.34ms
+   - Performance Change: +242.02%
+   ⚠️  WARNING: Significant performance degradation detected (>50%)
+   ✅ Response times are stable (low variation)
+
+❌ Errors Summary:
+   - Status UNKNOWN: 50 errors
+
+   First 5 errors:
+   - User 4, Request 2: timeout of 300000ms exceeded (N/A)
+   - User 12, Request 2: timeout of 300000ms exceeded (N/A)
+   - User 9, Request 2: timeout of 300000ms exceeded (N/A)
+   - User 13, Request 2: timeout of 300000ms exceeded (N/A)
+   - User 20, Request 2: timeout of 300000ms exceeded (N/A)
+
+🏁 Test completed at 2025-11-26T03:22:46.143Z
+🕒 Total test duration: 1304.351 seconds (21.74 minutes)
+═══════════════════════════════════════════════════════════
+❌ Test failed: Success rate below 95%

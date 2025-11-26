@@ -1,0 +1,108 @@
+🚀 Starting Ramp-Up Load Test at 2025-11-26T02:33:18.122Z
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com:8000/api/videos/upload
+   - Max Users: 500
+   - Ramp-Up Duration: 180 seconds (3 minutes)
+   - Hold Duration: 180 seconds (5 minutes)
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+   - Video File Size: 13.14 MB
+
+📈 Phase 1: Ramp-Up (0 → 500 users in 3 minutes)
+   Starting users gradually...
+   ✅ Started user 10/500
+   ✅ Started user 20/500
+   ✅ Started user 30/500
+   ✅ Started user 40/500
+   ✅ Started user 50/500
+   ✅ Started user 60/500
+   ✅ Started user 70/500
+   ✅ Started user 80/500
+   ✅ Started user 90/500
+   ✅ Started user 100/500
+   ✅ Started user 110/500
+   ✅ Started user 120/500
+   ✅ Started user 130/500
+   ✅ Started user 140/500
+   ✅ Started user 150/500
+   ✅ Started user 160/500
+   ✅ Started user 170/500
+   ✅ Started user 180/500
+   ✅ Started user 190/500
+   ✅ Started user 200/500
+   ✅ Started user 210/500
+   ✅ Started user 220/500
+   ✅ Started user 230/500
+   ✅ Started user 240/500
+   ✅ Started user 250/500
+   ✅ Started user 260/500
+   ✅ Started user 270/500
+   ✅ Started user 280/500
+   ✅ Started user 290/500
+   ✅ Started user 300/500
+   ✅ Started user 310/500
+   ✅ Started user 320/500
+   ✅ Started user 330/500
+   ✅ Started user 340/500
+   ✅ Started user 350/500
+   ✅ Started user 360/500
+   ✅ Started user 370/500
+   ✅ Started user 380/500
+   ✅ Started user 390/500
+   ✅ Started user 400/500
+   ✅ Started user 410/500
+   ✅ Started user 420/500
+   ✅ Started user 430/500
+   ✅ Started user 440/500
+   ✅ Started user 450/500
+   ✅ Started user 460/500
+   ✅ Started user 470/500
+   ✅ Started user 480/500
+   ✅ Started user 490/500
+   ✅ Started user 500/500
+
+📊 Phase 2: Hold (500 users for 5 minutes)
+   All users active, maintaining load...
+   Hold phase started at 2025-11-26T02:36:18.126Z
+
+⏳ Waiting for all requests to complete...
+
+═══════════════════════════════════════════════════════════
+📊 RAMP-UP LOAD TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 1582.04 seconds (26.37 minutes)
+👥 Max Concurrent Users: 500
+📈 Total Requests: 569
+✅ Successful Requests: 200
+❌ Failed Requests: 369
+📊 Success Rate: 35.15%
+
+📊 Throughput Metrics (Comparable across scenarios):
+   - MB/min: 99.66
+   - MB/s: 1.66
+   - Total MB Uploaded: 2627.90
+   - Video File Size: 13.14 MB
+
+⏱️  Latency Statistics (per video):
+   - Average: 802582.05ms
+   - Minimum: 3927ms
+   - Maximum: 1394094ms
+   - Standard Deviation: 454375.07ms
+   - P50 (Median): 483817.00ms
+   - P95: 660403.00ms
+   - P99: 664276.00ms
+
+❌ Errors Summary:
+   - Status 401: 319 errors
+   - Status UNKNOWN: 50 errors
+
+   First 5 errors:
+   - User 58, Request 1: timeout of 300000ms exceeded (N/A)
+   - User 60, Request 1: timeout of 300000ms exceeded (N/A)
+   - User 61, Request 1: timeout of 300000ms exceeded (N/A)
+   - User 63, Request 1: timeout of 300000ms exceeded (N/A)
+   - User 64, Request 1: timeout of 300000ms exceeded (N/A)
+
+🏁 Test completed at 2025-11-26T02:59:40.171Z
+🕒 Total test duration: 1582.049 seconds (26.37 minutes)
+═══════════════════════════════════════════════════════════
+❌ Test failed: Success rate below 95%
