@@ -610,7 +610,3 @@ def clear(region: str, queue_url: str):
             click.echo(f"✗ Error purging queue: {e}", err=True)
     except Exception as e:
         click.echo(f"✗ Error purging queue: {e}", err=True)
-
-
-if __name__ == '__main__':
-    cli()
