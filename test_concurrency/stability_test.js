@@ -1,3 +1,12 @@
+// Stability Test: Execute 5 minutes at 80% of X (best previous level without degradation)
+// This test confirms system stability at a sustainable load level
+//
+// Configuration:
+// - BASE_LEVEL: The best previous level without degradation (default: 200)
+// - Calculates 80% of BASE_LEVEL automatically
+// - Ramp-up: 60 seconds
+// - Hold duration: 5 minutes
+
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
@@ -23,8 +32,14 @@ process.stderr.on('error', (err) => {
 
 // Configuration
 const API_URL = 'http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com:8000/api/videos/upload';
-const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwamt6em1fMTc2MzAwMzk5MjIyOEBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDEyNTE0OX0.o1YJIFelG-TaA6r0fZJ3HqvjUOhHxcAUWQ3kcqTRbpY';
+const AUTH_TOKEN = process.env.AUTH_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwamt6em1fMTc2MzAwMzk5MjIyOEBleGFtcGxlLmNvbSIsImV4cCI6MTc2NDEyNzgzMH0.FVlQmTBXF2-rKpsvAwMoDc0vNcb_Q3RSp2P9x01VRqc'
 const VIDEO_FILE_PATH = path.join(__dirname, '..', 'sample-video.mp4');
+
+// Test parameters
+const BASE_LEVEL = parseInt(process.env.BASE_LEVEL) || 200; // Best previous level without degradation
+const STABILITY_LEVEL = Math.floor(BASE_LEVEL * 0.8); // 80% of base level
+const RAMP_UP_DURATION = 60 * 1000; // 60 seconds in milliseconds
+const HOLD_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Get video file size in bytes
 let VIDEO_FILE_SIZE_BYTES = 0;
@@ -64,11 +79,6 @@ const axiosInstance = axios.create({
   maxBodyLength: Infinity
 });
 
-// Test parameters
-const MAX_USERS = parseInt(process.env.MAX_USERS) || 300; // Default 100 users
-const RAMP_UP_DURATION = 3 * 60 * 1000; // 3 minutes in milliseconds
-const HOLD_DURATION = 3 * 60 * 1000; // 5 minutes in milliseconds
-
 // Statistics
 const stats = {
   totalRequests: 0,
@@ -89,7 +99,7 @@ async function uploadVideo(userId, requestNumber) {
   try {
     // Create form data
     const formData = new FormData();
-    formData.append('title', `ramp_user${userId}_req${requestNumber}`);
+    formData.append('title', `stability_user${userId}_req${requestNumber}`);
     formData.append('file', fs.createReadStream(VIDEO_FILE_PATH));
 
     // Make request using the configured axios instance with keep-alive
@@ -186,13 +196,14 @@ function calculateRampUpSchedule(maxUsers, rampDuration) {
 }
 
 // Main function
-async function runRampUpTest() {
+async function runStabilityTest() {
   const start = Date.now();
-  console.log(`🚀 Starting Ramp-Up Load Test at ${new Date(start).toISOString()}`);
+  console.log(`🚀 Starting Stability Test at ${new Date(start).toISOString()}`);
   console.log(`📊 Configuration:`);
   console.log(`   - API URL: ${API_URL}`);
-  console.log(`   - Max Users: ${MAX_USERS}`);
-  console.log(`   - Ramp-Up Duration: ${RAMP_UP_DURATION / 1000} seconds (3 minutes)`);
+  console.log(`   - Base Level (X): ${BASE_LEVEL} users`);
+  console.log(`   - Stability Level (80% of X): ${STABILITY_LEVEL} users`);
+  console.log(`   - Ramp-Up Duration: ${RAMP_UP_DURATION / 1000} seconds (60 seconds)`);
   console.log(`   - Hold Duration: ${HOLD_DURATION / 1000} seconds (5 minutes)`);
   console.log(`   - Video File: ${VIDEO_FILE_PATH}`);
   console.log(`   - Video File Size: ${(VIDEO_FILE_SIZE_BYTES / (1024 * 1024)).toFixed(2)} MB`);
@@ -216,9 +227,9 @@ async function runRampUpTest() {
   const holdEndTime = rampEndTime + HOLD_DURATION;
   
   // Calculate ramp-up schedule
-  const schedule = calculateRampUpSchedule(MAX_USERS, RAMP_UP_DURATION);
+  const schedule = calculateRampUpSchedule(STABILITY_LEVEL, RAMP_UP_DURATION);
   
-  console.log(`📈 Phase 1: Ramp-Up (0 → ${MAX_USERS} users in 3 minutes)`);
+  console.log(`📈 Phase 1: Ramp-Up (0 → ${STABILITY_LEVEL} users in 60 seconds)`);
   console.log(`   Starting users gradually...`);
   
   // Phase 1: Ramp-Up
@@ -236,22 +247,22 @@ async function runRampUpTest() {
     const userPromise = simulateUser(userSchedule.userId, userStartTime, holdEndTime);
     userPromises.push(userPromise);
     
-    if (userSchedule.userId % 10 === 0) {
-      console.log(`   ✅ Started user ${userSchedule.userId}/${MAX_USERS}`);
+    if (userSchedule.userId % 20 === 0 || userSchedule.userId === STABILITY_LEVEL) {
+      console.log(`   ✅ Started user ${userSchedule.userId}/${STABILITY_LEVEL}`);
     }
   }
   
-  console.log(`\n📊 Phase 2: Hold (${MAX_USERS} users for 5 minutes)`);
-  console.log(`   All users active, maintaining load...`);
+  console.log(`\n📊 Phase 2: Stability Hold (${STABILITY_LEVEL} users for 5 minutes)`);
+  console.log(`   All users active, maintaining stable load at 80% of base level...`);
   
   // Wait for ramp-up to complete
   await new Promise(resolve => setTimeout(resolve, RAMP_UP_DURATION - (Date.now() - testStartTime)));
   
   // Phase 2: Hold - all users are now active
   const holdStartTime = Date.now();
-  console.log(`   Hold phase started at ${new Date(holdStartTime).toISOString()}`);
+  console.log(`   Stability phase started at ${new Date(holdStartTime).toISOString()}`);
   
-  // Wait for hold duration
+  // Wait for hold duration (5 minutes)
   await new Promise(resolve => setTimeout(resolve, HOLD_DURATION));
   
   // Wait for all users to finish their current requests
@@ -291,10 +302,10 @@ async function runRampUpTest() {
   // Print results
   console.log('');
   console.log('═══════════════════════════════════════════════════════════');
-  console.log('📊 RAMP-UP LOAD TEST RESULTS');
+  console.log('📊 STABILITY TEST RESULTS');
   console.log('═══════════════════════════════════════════════════════════');
   console.log(`⏱️  Total Test Duration: ${totalTestDuration.toFixed(2)} seconds (${(totalTestDuration / 60).toFixed(2)} minutes)`);
-  console.log(`👥 Max Concurrent Users: ${MAX_USERS}`);
+  console.log(`👥 Stability Level: ${STABILITY_LEVEL} users (80% of ${BASE_LEVEL})`);
   console.log(`📈 Total Requests: ${stats.totalRequests}`);
   console.log(`✅ Successful Requests: ${stats.successfulRequests}`);
   console.log(`❌ Failed Requests: ${stats.failedRequests}`);
@@ -316,7 +327,7 @@ async function runRampUpTest() {
   console.log(`   - P99: ${p99 ? p99.toFixed(2) + 'ms' : 'N/A'}`);
   console.log('');
   
-  // Analyze degradation and variability
+  // Analyze stability during hold phase
   const rampUpRequests = stats.responseTimeHistory.filter(r => r.timestamp < rampEndTime);
   const holdRequests = stats.responseTimeHistory.filter(r => r.timestamp >= rampEndTime && r.timestamp < holdStartTime + HOLD_DURATION);
   
@@ -348,12 +359,14 @@ async function runRampUpTest() {
     console.log('📊 Performance Comparison (Ramp-Up vs Hold):');
     console.log(`   - Ramp-Up Avg Response Time: ${rampUpAvg.toFixed(2)}ms`);
     console.log(`   - Hold Phase Avg Response Time: ${holdAvg.toFixed(2)}ms`);
-    console.log(`   - Performance Degradation: ${degradation.toFixed(2)}%`);
+    console.log(`   - Performance Change: ${degradation > 0 ? '+' : ''}${degradation.toFixed(2)}%`);
     
     if (degradation > 50) {
       console.log(`   ⚠️  WARNING: Significant performance degradation detected (>50%)`);
     } else if (degradation > 20) {
       console.log(`   ⚠️  CAUTION: Moderate performance degradation detected (>20%)`);
+    } else if (degradation < -20) {
+      console.log(`   ✅ Performance improved during hold phase`);
     } else {
       console.log(`   ✅ Performance is stable`);
     }
@@ -395,7 +408,7 @@ async function runRampUpTest() {
   console.log(`🕒 Total test duration: ${duration / 1000} seconds (${(duration / 1000 / 60).toFixed(2)} minutes)`);
   console.log('═══════════════════════════════════════════════════════════');
   
-  // Return exit code based on success rate
+  // Return exit code based on success rate and stability
   if (successRate < 95) {
     console.log('❌ Test failed: Success rate below 95%');
     process.exit(1);
@@ -406,7 +419,7 @@ async function runRampUpTest() {
 }
 
 // Run the test
-runRampUpTest().catch(error => {
+runStabilityTest().catch(error => {
   console.error('❌ Test failed:', error);
   process.exit(1);
 });

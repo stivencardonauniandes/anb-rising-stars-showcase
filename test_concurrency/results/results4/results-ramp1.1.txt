@@ -1,0 +1,67 @@
+🚀 Starting Ramp-Up Load Test at 2025-11-14T23:31:45.884Z
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com/api/videos/upload
+   - Max Users: 100
+   - Ramp-Up Duration: 180 seconds (3 minutes)
+   - Hold Duration: 300 seconds (5 minutes)
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+
+📈 Phase 1: Ramp-Up (0 → 100 users in 3 minutes)
+   Starting users gradually...
+   ✅ Started user 10/100
+   ✅ Started user 20/100
+   ✅ Started user 30/100
+   ✅ Started user 40/100
+   ✅ Started user 50/100
+   ✅ Started user 60/100
+   ✅ Started user 70/100
+   ✅ Started user 80/100
+   ✅ Started user 90/100
+   ✅ Started user 100/100
+
+📊 Phase 2: Hold (100 users for 5 minutes)
+   All users active, maintaining load...
+   Hold phase started at 2025-11-14T23:34:45.891Z
+
+⏳ Waiting for all requests to complete...
+
+═══════════════════════════════════════════════════════════
+📊 RAMP-UP LOAD TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 545.55 seconds (9.09 minutes)
+👥 Max Concurrent Users: 100
+📈 Total Requests: 999
+✅ Successful Requests: 740
+❌ Failed Requests: 259
+📊 Success Rate: 74.07%
+⚡ Requests per Second: 1.83
+
+⏱️  Response Time Statistics:
+   - Average: 41850.75ms
+   - Minimum: 1283ms
+   - Maximum: 81108ms
+   - P50 (Median): 39511ms
+   - P95: 67622ms
+   - P99: 75716ms
+
+📉 Performance Analysis:
+   - Ramp-Up Avg Response Time: 6606.79ms
+   - Hold Phase Avg Response Time: 46776.31ms
+   - Performance Degradation: 608.00%
+   ⚠️  WARNING: Significant performance degradation detected (>50%)
+
+❌ Errors Summary:
+   - Status 500: 52 errors
+   - Status 504: 207 errors
+
+   First 5 errors:
+   - User 1, Request 2: Request failed with status code 504 (504)
+   - User 2, Request 1: Request failed with status code 504 (504)
+   - User 4, Request 1: Request failed with status code 504 (504)
+   - User 3, Request 2: Request failed with status code 504 (504)
+   - User 6, Request 2: Request failed with status code 504 (504)
+
+🏁 Test completed at 2025-11-14T23:40:51.445Z
+🕒 Total test duration: 545.561 seconds (9.09 minutes)
+═══════════════════════════════════════════════════════════
+❌ Test failed: Success rate below 95%

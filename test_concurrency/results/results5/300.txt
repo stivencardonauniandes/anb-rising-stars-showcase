@@ -1,0 +1,92 @@
+🚀 Starting Ramp-Up Load Test at 2025-11-26T02:16:19.774Z
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com:8000/api/videos/upload
+   - Max Users: 300
+   - Ramp-Up Duration: 180 seconds (3 minutes)
+   - Hold Duration: 180 seconds (5 minutes)
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+   - Video File Size: 13.14 MB
+
+📈 Phase 1: Ramp-Up (0 → 300 users in 3 minutes)
+   Starting users gradually...
+   ✅ Started user 10/300
+   ✅ Started user 20/300
+   ✅ Started user 30/300
+   ✅ Started user 40/300
+   ✅ Started user 50/300
+   ✅ Started user 60/300
+   ✅ Started user 70/300
+   ✅ Started user 80/300
+   ✅ Started user 90/300
+   ✅ Started user 100/300
+   ✅ Started user 110/300
+   ✅ Started user 120/300
+   ✅ Started user 130/300
+   ✅ Started user 140/300
+   ✅ Started user 150/300
+   ✅ Started user 160/300
+   ✅ Started user 170/300
+   ✅ Started user 180/300
+   ✅ Started user 190/300
+   ✅ Started user 200/300
+   ✅ Started user 210/300
+   ✅ Started user 220/300
+   ✅ Started user 230/300
+   ✅ Started user 240/300
+   ✅ Started user 250/300
+   ✅ Started user 260/300
+   ✅ Started user 270/300
+   ✅ Started user 280/300
+   ✅ Started user 290/300
+   ✅ Started user 300/300
+
+📊 Phase 2: Hold (300 users for 5 minutes)
+   All users active, maintaining load...
+   Hold phase started at 2025-11-26T02:19:19.776Z
+
+⏳ Waiting for all requests to complete...
+
+═══════════════════════════════════════════════════════════
+📊 RAMP-UP LOAD TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 988.47 seconds (16.47 minutes)
+👥 Max Concurrent Users: 300
+📈 Total Requests: 404
+✅ Successful Requests: 404
+❌ Failed Requests: 0
+📊 Success Rate: 100.00%
+
+📊 Throughput Metrics (Comparable across scenarios):
+   - MB/min: 322.22
+   - MB/s: 5.37
+   - Total MB Uploaded: 5308.36
+   - Video File Size: 13.14 MB
+
+⏱️  Latency Statistics (per video):
+   - Average: 462866.05ms
+   - Minimum: 3348ms
+   - Maximum: 742963ms
+   - Standard Deviation: 203823.63ms
+   - P50 (Median): 472967.00ms
+   - P95: 729638.00ms
+   - P99: 737927.00ms
+
+📉 Variability Analysis (Hold Phase):
+   - Average Processing Time: 671639.18ms
+   - Standard Deviation: 25851.61ms
+   - Coefficient of Variation: 3.85%
+   - P50 (Median): 669426.00ms
+   - P95: 711135.00ms
+   - P99: 732324.00ms
+
+📊 Performance Comparison (Ramp-Up vs Hold):
+   - Ramp-Up Avg Response Time: 432703.37ms
+   - Hold Phase Avg Response Time: 671639.18ms
+   - Performance Degradation: 55.22%
+   ⚠️  WARNING: Significant performance degradation detected (>50%)
+   ✅ Response times are stable (low variation)
+
+🏁 Test completed at 2025-11-26T02:32:48.250Z
+🕒 Total test duration: 988.476 seconds (16.47 minutes)
+═══════════════════════════════════════════════════════════
+✅ Test passed: Success rate above 95%

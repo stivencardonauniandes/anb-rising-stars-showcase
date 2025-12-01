@@ -1,0 +1,77 @@
+🚀 Starting concurrency test...
+📊 Configuration:
+   - API URL: http://api-load-balancer-349981975.us-east-1.elb.amazonaws.com:8000/api/videos/upload
+   - Duration: 60 seconds
+   - Concurrent Users: 5
+   - Video File: /Users/andres-uniandes/dev/uniandes/anb-rising-stars-showcase/sample-video.mp4
+   - Video File Size: 13.14 MB
+
+👤 User 1 started uploading videos...
+👤 User 2 started uploading videos...
+👤 User 3 started uploading videos...
+👤 User 4 started uploading videos...
+👤 User 5 started uploading videos...
+✅ User 1 - Request 1 - Success in 8639ms - Task ID: fa8178d7-2694-40ab-ba46-52f82266490c
+✅ User 2 - Request 1 - Success in 9335ms - Task ID: 5e14cb35-a6dc-4e68-b38e-b944beed07ab
+✅ User 5 - Request 1 - Success in 10664ms - Task ID: c81224ee-e8db-4867-bd14-ca96a825dc00
+✅ User 3 - Request 1 - Success in 11415ms - Task ID: ccff3472-d91b-414f-bdf3-0f7a9e8edfab
+✅ User 4 - Request 1 - Success in 11432ms - Task ID: 478882cf-e020-4fdd-bfab-55918164318b
+✅ User 1 - Request 2 - Success in 5354ms - Task ID: 67fedd1b-4b8b-45d4-a8f2-51770a7014c9
+✅ User 2 - Request 2 - Success in 7141ms - Task ID: 1f6b0e33-86da-4d44-bdab-ab1a62bc4bea
+✅ User 4 - Request 2 - Success in 9018ms - Task ID: d914c9aa-a146-47a5-af4b-1d2d52066248
+✅ User 3 - Request 2 - Success in 10026ms - Task ID: 26f8c9aa-d266-4c18-a7f5-1fc837ffac88
+✅ User 5 - Request 2 - Success in 10989ms - Task ID: 8144d4e6-366e-4899-bc2b-41fec4e6b7c3
+✅ User 1 - Request 3 - Success in 8065ms - Task ID: 0ccc3ef3-93dd-41dc-842b-ee55dfe8279c
+✅ User 2 - Request 3 - Success in 6684ms - Task ID: 30997f43-de55-4e9c-a039-910bf1eb9fd3
+✅ User 4 - Request 3 - Success in 8162ms - Task ID: e55f5db9-a328-4087-852f-aa0e4e9e02b5
+✅ User 5 - Request 3 - Success in 8273ms - Task ID: 81521f64-4684-456b-b3c6-d0ee1e7690eb
+✅ User 3 - Request 3 - Success in 9080ms - Task ID: d88caada-f28c-40a7-b2da-04e953a767d1
+✅ User 2 - Request 4 - Success in 9989ms - Task ID: bdfa1e64-7711-450c-a166-3e113fa2b0fe
+✅ User 1 - Request 4 - Success in 12042ms - Task ID: 017bf718-5db7-4b29-ba16-d2d0499fd862
+✅ User 5 - Request 4 - Success in 9045ms - Task ID: 65ea0994-96df-4189-93ea-744cbac6004a
+✅ User 4 - Request 4 - Success in 10656ms - Task ID: 5b67f278-c536-4bc0-bd88-ab8c4cb1e6bb
+✅ User 3 - Request 4 - Success in 9425ms - Task ID: 4780598c-713f-4f85-a72f-cab07f7f9a1e
+✅ User 2 - Request 5 - Success in 8142ms - Task ID: 2d5006bc-1632-44e4-848e-5a5d5507c5ac
+✅ User 1 - Request 5 - Success in 8906ms - Task ID: 02d1e7a4-bfcd-4f82-943a-e44d67030258
+✅ User 5 - Request 5 - Success in 9270ms - Task ID: 9689966a-ea77-4e49-bf87-d168646d3857
+✅ User 4 - Request 5 - Success in 10287ms - Task ID: bd38734e-1ef0-4f40-97ef-af193d49616d
+✅ User 3 - Request 5 - Success in 10042ms - Task ID: 1b7c5150-648a-419f-bb7c-dbfa014c8d5b
+✅ User 2 - Request 6 - Success in 10585ms - Task ID: 5c98a45e-a1f5-4fec-8df0-03572ebef201
+✅ User 1 - Request 6 - Success in 9990ms - Task ID: 4d832f55-81bb-4f90-99c9-2fb0e029f548
+✅ User 3 - Request 6 - Success in 8854ms - Task ID: 497b9685-fd98-45be-acbd-f1625d0ad8b4
+✅ User 4 - Request 6 - Success in 10215ms - Task ID: 7026d490-d581-441f-aee3-048fa1f08b1e
+👤 User 4 finished - Total requests: 6
+✅ User 5 - Request 6 - Success in 11628ms - Task ID: 506f2170-f548-4222-893e-b802b6bd25b6
+👤 User 5 finished - Total requests: 6
+✅ User 2 - Request 7 - Success in 9180ms - Task ID: 2d325d1b-0acc-4889-b514-12cd9545bd7c
+👤 User 2 finished - Total requests: 7
+✅ User 1 - Request 7 - Success in 8258ms - Task ID: 337031db-f70b-4d25-9acc-312d8215de67
+👤 User 1 finished - Total requests: 7
+✅ User 3 - Request 7 - Success in 3424ms - Task ID: 366db0f9-cb3f-4785-8e27-cd9d9cb838bb
+👤 User 3 finished - Total requests: 7
+
+═══════════════════════════════════════════════════════════
+📊 CONCURRENCY TEST RESULTS
+═══════════════════════════════════════════════════════════
+⏱️  Total Test Duration: 62.98 seconds
+📈 Total Requests: 33
+✅ Successful Requests: 33
+❌ Failed Requests: 0
+📊 Success Rate: 100.00%
+
+📊 Throughput Metrics (Comparable across scenarios):
+   - MB/min: 413.11
+   - MB/s: 6.89
+   - Total MB Uploaded: 433.60
+   - Video File Size: 13.14 MB
+
+⏱️  Latency Statistics (per video):
+   - Average: 9218.64ms
+   - Minimum: 3424ms
+   - Maximum: 12042ms
+   - Standard Deviation: 1764.14ms
+   - P50 (Median): 9270.00ms
+   - P95: 11628.00ms
+   - P99: 12042.00ms
+
+═══════════════════════════════════════════════════════════

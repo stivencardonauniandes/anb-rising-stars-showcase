@@ -43,17 +43,42 @@ O en Windows:
 set AUTH_TOKEN=tu-token-aqui
 ```
 
-## ▶️ Ejecutar el Test
+## ▶️ Ejecutar los Tests
 
+### Smoke Test (5 usuarios, 1 minuto)
 ```bash
 npm test
+# o
+npm run smoke
 ```
 
-O directamente:
+### Ramp-Up Tests
+```bash
+npm run ramp:100    # 100 usuarios
+npm run ramp:200    # 200 usuarios
+npm run ramp:300    # 300 usuarios
+npm run ramp:500    # 500 usuarios
+npm run ramp:progressive  # Test progresivo
+npm run ramp:custom  # Test personalizado (configurar MAX_USERS)
+```
+
+### Stability Test (Test de Estabilidad)
+Ejecuta 5 minutos al 80% del mejor nivel previo sin degradación para confirmar estabilidad.
 
 ```bash
-node index.js
+npm run stability
 ```
+
+Por defecto usa 200 usuarios como nivel base (80% = 160 usuarios). Para usar un nivel diferente:
+
+```bash
+BASE_LEVEL=300 npm run stability  # Usará 240 usuarios (80% de 300)
+```
+
+**Configuración del Stability Test:**
+- **Ramp-up**: 60 segundos (0 → 80% de X usuarios)
+- **Hold duration**: 5 minutos (mantiene la carga estable)
+- **Nivel base (X)**: Configurable via `BASE_LEVEL` (default: 200)
 
 ## 📊 Configuración del Test
 
@@ -130,7 +155,14 @@ El test mostrará:
 
 ## 📝 Notas
 
-- El test hace un pequeño delay (100ms) entre requests para no sobrecargar el servidor
+- El test hace un pequeño delay (100-200ms) entre requests para no sobrecargar el servidor
 - El timeout por request es de 5 minutos (300000ms)
 - Cada usuario sube videos continuamente hasta que se cumpla el tiempo
+- El **Stability Test** está diseñado para confirmar que el sistema puede mantener una carga sostenible (80% del nivel máximo sin degradación) durante 5 minutos
+
+## 🎯 Escenarios de Prueba
+
+1. **Smoke Test**: Validación básica con 5 usuarios durante 1 minuto
+2. **Ramp-Up Tests**: Identificar el nivel máximo sin degradación (ramp-up de 3 min, hold de 5 min)
+3. **Stability Test**: Confirmar estabilidad ejecutando 5 minutos al 80% del mejor nivel previo
 

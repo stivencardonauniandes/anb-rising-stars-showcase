@@ -79,6 +79,9 @@ func Run(ctx context.Context) error {
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	metricsMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	metricsSrv := &http.Server{
 		Addr:              cfg.MetricsAddr,
 		Handler:           metricsMux,
